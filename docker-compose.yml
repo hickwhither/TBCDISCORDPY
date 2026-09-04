@@ -9,19 +9,14 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Uncomment for development with hot reload
-    # volumes:
-    #   - ./core:/app/core
-    #   - ./features:/app/features
-    #   - ./models:/app/models
-    #   - ./repository:/app/repository
-    #   - ./main.py:/app/main.py
     develop:
       watch:
         - action: sync
