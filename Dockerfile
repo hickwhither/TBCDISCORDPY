@@ -1,20 +1,13 @@
-# Build stage
+# Build
 FROM python:3.14-slim AS builder
 
 WORKDIR /app
-
-# Install UV
 RUN pip install --no-cache-dir uv
-
-# Copy dependency files
 COPY pyproject.toml uv.lock ./
-
-# Create virtual environment and install dependencies
 RUN uv sync --frozen --no-dev
 
-# Runtime stage
+# Runtime
 FROM python:3.14-slim
-
 WORKDIR /app
 
 # Install runtime dependencies (e.g., for discord-py voice support)
@@ -23,14 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopus0 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
-
 # Copy virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
 
-# Copy application code
 COPY . .
-
-# Activate virtual environment
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
