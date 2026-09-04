@@ -49,7 +49,7 @@ async def unmark_channel(ctx: discord.ext.commands.Context) -> None:
             pass
 
     await repository.remove_channel(channel.id)
-    await ctx.message.add_reaction("<:antiraid_disabled:1544363200726831284>")
+    await ctx.message.add_reaction("🥲")
 
 
 async def get_marked_list(bot: discord.ext.commands.Bot) -> list[str]:
