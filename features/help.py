@@ -9,6 +9,11 @@ class CustomHelp(commands.HelpCommand):
             'aliases': ['h']
         })
 
+    def _can_see(self, command) -> bool:
+        if not command.hidden:
+            return True
+        return self.context.author.id in self.context.bot.owner_ids
+
     async def send_bot_help(self, mapping):
         prefix = self.context.prefix
         embed = discord.Embed(
@@ -17,6 +22,9 @@ class CustomHelp(commands.HelpCommand):
         )
 
         for cog, cmds in mapping.items():
+            cmds = [c for c in cmds if self._can_see(c)]
+            if not cmds:
+                continue
             cmds.sort(key=lambda c: c.name)
             cmd_list = '\n'.join(
                 f'`{prefix}{c.name}` — {c.short_doc or "No description"}'
@@ -36,6 +44,8 @@ class CustomHelp(commands.HelpCommand):
 
         lines = []
         for cmd in cog.walk_commands():
+            if not self._can_see(cmd):
+                continue
             sig = self.get_command_signature(cmd)
             lines.append(f'`{sig}` — {cmd.short_doc or "No description"}')
         embed.add_field(name='Commands', value='\n'.join(lines), inline=False)

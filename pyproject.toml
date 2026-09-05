@@ -9,4 +9,5 @@ dependencies = [
     "dotenv>=0.9.9",
     "sqlalchemy>=2.0",
     "aiosqlite>=0.20.0",
+    "alembic>=1.19.2",
 ]

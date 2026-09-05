@@ -12,7 +12,7 @@ class Connhen(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.command(aliases=["connhen", "wallet", "money", "bal"])
+    @commands.command(aliases=["wallet", "money", "balance", "bal"])
     async def connhen(self, ctx: commands.Context, member: discord.Member | None = None):
         """Xem ví connhen của bạn (hoặc người khác)."""
         member = member or ctx.author

@@ -1,12 +1,18 @@
 import os
+import pathlib
 import warnings
+
+from dotenv import load_dotenv
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-DB_DIR = "data"
-DB_PATH = os.path.join(DB_DIR, "tbc.db")
-DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
+load_dotenv()
+
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "sqlite+aiosqlite:///data/tbc.db",
+)
 
 warnings.filterwarnings(
     "ignore",
@@ -22,7 +28,22 @@ class Base(DeclarativeBase):
     pass
 
 
-async def init_db():
-    os.makedirs(DB_DIR, exist_ok=True)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+def _ensure_sqlite_dir(url: str) -> None:
+    if url.startswith("sqlite"):
+        db_path = url.rsplit("///", 1)[-1]
+        if db_path and db_path != "memory":
+            pathlib.Path(os.path.dirname(db_path) or ".").mkdir(parents=True, exist_ok=True)
+
+
+async def init_db() -> None:
+    _ensure_sqlite_dir(DATABASE_URL)
+    import asyncio
+    from alembic import command
+    from alembic.config import Config
+
+    def upgrade() -> None:
+        cfg = Config("alembic.ini")
+        cfg.set_main_option("script_location", "migrations")
+        command.upgrade(cfg, "head")
+
+    await asyncio.to_thread(upgrade)

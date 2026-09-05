@@ -9,7 +9,7 @@ class Developer(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def sync(self, ctx: commands.Context):
         """Sync tree"""
@@ -20,7 +20,7 @@ class Developer(commands.Cog):
         # await self.tree.sync(guild = Object(1151743010044911656))
         await ctx.reply('Command tree synced.')
 
-    @commands.command(aliases = ['rl','yell'])
+    @commands.command(aliases = ['rl','yell'], hidden=True)
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, *, exts: str = ''):
         """Reload features"""
