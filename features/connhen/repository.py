@@ -1,7 +1,9 @@
 from datetime import datetime
+
 from sqlalchemy import select
 
 from core.database import async_session
+
 from .models import UserEconomy
 
 

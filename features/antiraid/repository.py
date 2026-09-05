@@ -1,4 +1,5 @@
 from sqlalchemy import select
+
 from core.database import async_session
 from features.antiraid.models import MarkedChannel
 
@@ -17,14 +18,18 @@ async def get_all() -> list[MarkedChannel]:
         return list(result.scalars().all())
 
 
-async def add_channel(channel_id: int, guild_id: int, marked_by: int, message_id: int) -> None:
+async def add_channel(
+    channel_id: int, guild_id: int, marked_by: int, message_id: int
+) -> None:
     async with async_session() as session:
-        session.add(MarkedChannel(
-            channel_id=channel_id,
-            guild_id=guild_id,
-            marked_by=marked_by,
-            message_id=message_id,
-        ))
+        session.add(
+            MarkedChannel(
+                channel_id=channel_id,
+                guild_id=guild_id,
+                marked_by=marked_by,
+                message_id=message_id,
+            )
+        )
         await session.commit()
 
 

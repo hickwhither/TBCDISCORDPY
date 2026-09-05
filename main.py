@@ -1,3 +1,3 @@
-from core import config
-from core import TBC
+from core import TBC, config
+
 TBC.run(config.BOT_TOKEN)

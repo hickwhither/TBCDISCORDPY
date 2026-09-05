@@ -11,3 +11,20 @@ dependencies = [
     "aiosqlite>=0.20.0",
     "alembic>=1.19.2",
 ]
+
+[dependency-groups]
+dev = ["ruff"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"features/antiraid/service.py" = ["W291"]
+
+[tool.ruff.format]
+quote-style = "double"

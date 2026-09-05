@@ -3,12 +3,11 @@ import os
 import pathlib
 from logging.config import fileConfig
 
+from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
 
 load_dotenv()
 
@@ -34,10 +33,9 @@ if config.config_file_name is not None:
 
 # Add your model's MetaData object here
 # for 'autogenerate' support.
-from core.database import Base  # noqa: E402
-
 import features.antiraid.models  # noqa: E402, F401
 import features.connhen.models  # noqa: E402, F401
+from core.database import Base  # noqa: E402
 
 target_metadata = Base.metadata
 

@@ -34,7 +34,9 @@ def _ensure_sqlite_dir(url: str) -> None:
     if url.startswith("sqlite"):
         db_path = url.rsplit("///", 1)[-1]
         if db_path and db_path != "memory":
-            pathlib.Path(os.path.dirname(db_path) or ".").mkdir(parents=True, exist_ok=True)
+            pathlib.Path(os.path.dirname(db_path) or ".").mkdir(
+                parents=True, exist_ok=True
+            )
 
 
 def _sqlite_path(url: str) -> str | None:
@@ -77,6 +79,7 @@ def backup_db() -> None:
 async def init_db() -> None:
     _ensure_sqlite_dir(DATABASE_URL)
     import asyncio
+
     from alembic import command
     from alembic.config import Config
 

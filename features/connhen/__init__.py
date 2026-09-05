@@ -13,7 +13,9 @@ class Connhen(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=["wallet", "money", "balance", "bal"])
-    async def connhen(self, ctx: commands.Context, member: discord.Member | None = None):
+    async def connhen(
+        self, ctx: commands.Context, member: discord.Member | None = None
+    ):
         """Xem ví connhen của bạn (hoặc người khác)."""
         member = member or ctx.author
         amount = await service.balance(member.id)
@@ -54,7 +56,9 @@ class Connhen(commands.Cog):
             stake = await service.balance(ctx.author.id)
         else:
             if not amount.isdigit():
-                return await ctx.reply("Sai cú pháp. Ví dụ: `!gamble 50` hoặc `!gamble all`.")
+                return await ctx.reply(
+                    "Sai cú pháp. Ví dụ: `!gamble 50` hoặc `!gamble all`."
+                )
             stake = int(amount)
 
         if stake <= 0:
@@ -69,14 +73,14 @@ class Connhen(commands.Cog):
             embed = discord.Embed(
                 title="🎉 BẠN THẮNG!",
                 description=f"Cược **{service.format_amount(result.stake)}** -> +**{service.format_amount(result.stake)}**\n"
-                            f"Số dư: **{service.format_amount(result.new_balance)}**",
+                f"Số dư: **{service.format_amount(result.new_balance)}**",
                 color=discord.Color.green(),
             )
         else:
             embed = discord.Embed(
                 title="💀 BẠN THUA!",
                 description=f"Mất **{service.format_amount(result.stake)}**.\n"
-                            f"Số dư: **{service.format_amount(result.new_balance)}**",
+                f"Số dư: **{service.format_amount(result.new_balance)}**",
                 color=discord.Color.red(),
             )
         await ctx.reply(embed=embed)
