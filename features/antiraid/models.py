@@ -7,6 +7,7 @@ from core.database import Base
 
 class MarkedChannel(Base):
     __tablename__ = "marked_channels"
+    __table_args__ = {"extend_existing": True}
 
     channel_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     guild_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
