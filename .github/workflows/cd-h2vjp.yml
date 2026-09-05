@@ -1,0 +1,23 @@
+name: CD hickwhither h2cloud vps
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd TBCDISCORDPY
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            docker image prune -f
