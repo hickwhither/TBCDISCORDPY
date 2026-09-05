@@ -1,6 +1,8 @@
 import os
 import pathlib
+import sqlite3
 import warnings
+from datetime import datetime
 
 from dotenv import load_dotenv
 from sqlalchemy import exc as sa_exc
@@ -35,11 +37,50 @@ def _ensure_sqlite_dir(url: str) -> None:
             pathlib.Path(os.path.dirname(db_path) or ".").mkdir(parents=True, exist_ok=True)
 
 
+def _sqlite_path(url: str) -> str | None:
+    if not url.startswith("sqlite"):
+        return None
+    path = url.rsplit("///", 1)[-1]
+    if path in ("", "memory"):
+        return None
+    return path
+
+
+def _prune_backups(backup_dir: pathlib.Path, keep: int = 15) -> None:
+    backups = sorted(backup_dir.glob("tbc-*.db"), reverse=True)
+    for old in backups[keep:]:
+        old.unlink(missing_ok=True)
+
+
+def backup_db() -> None:
+    path = _sqlite_path(DATABASE_URL)
+    if path is None or not os.path.exists(path):
+        return
+
+    backup_dir = pathlib.Path("data/backups")
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    dest = backup_dir / f"tbc-{stamp}.db"
+
+    src = sqlite3.connect(path)
+    dst = sqlite3.connect(dest)
+    try:
+        src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+
+    _prune_backups(backup_dir, keep=15)
+    print(f"[Backup] Database -> {dest}")
+
+
 async def init_db() -> None:
     _ensure_sqlite_dir(DATABASE_URL)
     import asyncio
     from alembic import command
     from alembic.config import Config
+
+    await asyncio.to_thread(backup_db)
 
     def upgrade() -> None:
         cfg = Config("alembic.ini")
