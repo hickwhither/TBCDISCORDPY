@@ -27,6 +27,7 @@ async def on_message(message: Message):
 
 @TBC.event
 async def setup_hook():
+    await init_db()
     extra_log = []
     for file in os.listdir("features"):
         if not file.startswith("_") and os.path.exists(os.path.join("features", file)):
@@ -37,7 +38,6 @@ async def setup_hook():
                 print(f"✅ Loaded {file}")
             except Exception as e:
                 print(f"❌ Error {file}: {e}")
-    await init_db()
     print()
     for extra in extra_log:
         print(f"From {extra[0]}:\n{extra[1]}")
