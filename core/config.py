@@ -5,3 +5,4 @@ load_dotenv()
 BOT_ID = os.environ["BOT_ID"]
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 PREFIX = os.environ["PREFIX"]
+OWNER_ID = int(os.environ["OWNER_ID"])

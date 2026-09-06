@@ -13,6 +13,7 @@ TBC = Bot(
     command_prefix=config.PREFIX,
     intents = discord.Intents.all(),
     application_id = config.BOT_ID,
+    owner_ids=[config.OWNER_ID],
     help_command=None
 )
 
