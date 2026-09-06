@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from . import service
+from features.connhen import service
 
 
 async def setup(bot: commands.Bot) -> None:

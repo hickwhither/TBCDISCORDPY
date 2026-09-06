@@ -3,8 +3,7 @@ from datetime import datetime
 from sqlalchemy import select
 
 from core.database import async_session
-
-from .models import UserEconomy
+from features.connhen.models import UserEconomy
 
 
 async def get_or_create(user_id: int) -> UserEconomy:

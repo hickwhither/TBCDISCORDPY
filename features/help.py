@@ -11,17 +11,17 @@ class CustomHelp(commands.HelpCommand):
             }
         )
 
-    def _can_see(self, command) -> bool:
+    async def _can_see(self, command) -> bool:
         if not command.hidden:
             return True
-        return self.context.author.id in self.context.bot.owner_ids
+        return await self.context.bot.is_owner(self.context.author)
 
     async def send_bot_help(self, mapping):
         prefix = self.context.prefix
         embed = discord.Embed(title="Help Menu", color=discord.Color.blurple())
 
         for cog, cmds in mapping.items():
-            cmds = [c for c in cmds if self._can_see(c)]
+            cmds = [c for c in cmds if await self._can_see(c)]
             if not cmds:
                 continue
             cmds.sort(key=lambda c: c.name)
@@ -44,7 +44,7 @@ class CustomHelp(commands.HelpCommand):
 
         lines = []
         for cmd in cog.walk_commands():
-            if not self._can_see(cmd):
+            if not await self._can_see(cmd):
                 continue
             sig = self.get_command_signature(cmd)
             lines.append(f"`{sig}` — {cmd.short_doc or 'No description'}")
@@ -56,6 +56,10 @@ class CustomHelp(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_command_help(self, command):
+        if not await self._can_see(command):
+            return await self.get_destination().send(
+                self.command_not_found(command.name)
+            )
         embed = discord.Embed(
             title=self.get_command_signature(command),
             description=command.help or command.short_doc or "No description.",
