@@ -1,16 +1,13 @@
 import discord
 from discord.ext import commands
 
-from core.database import init_db
 from features.tempvoice import repository, service
 from features.tempvoice.views import ControlPanelView
-
 
 TARGET_GUILD_ID = 1275798785318064138
 
 
 async def setup(bot: commands.Bot) -> None:
-    await init_db()
     await bot.add_cog(TempVoice(bot))
     for row in await repository.get_all():
         channel = bot.get_channel(row.channel_id)
@@ -18,9 +15,11 @@ async def setup(bot: commands.Bot) -> None:
             continue
         try:
             await channel.fetch_message(row.panel_message_id)
-        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+        except discord.NotFound, discord.Forbidden, discord.HTTPException:
             continue
-        bot.add_view(ControlPanelView(bot, row.channel_id), message_id=row.panel_message_id)
+        bot.add_view(
+            ControlPanelView(bot, row.channel_id), message_id=row.panel_message_id
+        )
 
 
 class TempVoice(commands.Cog):
@@ -62,7 +61,7 @@ class TempVoice(commands.Cog):
         if isinstance(channel, discord.VoiceChannel):
             await repository.remove(channel.id)
 
-    @commands.command(aliases=["tempvoice"])
+    @commands.command(aliases=["tempvoice"], hidden=True)
     @commands.is_owner()
     async def voicelist(self, ctx: commands.Context):
         """Danh sách các phòng voice tạm đang hoạt động."""
@@ -84,31 +83,47 @@ class TempVoice(commands.Cog):
             return await ctx.reply("Hiện không có phòng voice tạm nào.")
         await ctx.reply("\n".join(lines))
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def createvoice(self, ctx: commands.Context):
         """Tạo kênh trigger 'Create Voice' (chỉ ở server chính)."""
         if ctx.guild.id != TARGET_GUILD_ID:
-            return await ctx.reply(f"❌ Lệnh này chỉ chạy ở server `{TARGET_GUILD_ID}`.")
+            return await ctx.reply(
+                f"❌ Lệnh này chỉ chạy ở server `{TARGET_GUILD_ID}`."
+            )
 
-        existing = discord.utils.get(ctx.guild.voice_channels, name=service.TRIGGER_NAME)
+        existing = discord.utils.get(
+            ctx.guild.voice_channels, name=service.TRIGGER_NAME
+        )
         if existing:
-            return await ctx.reply(f"✅ Kênh `{service.TRIGGER_NAME}` đã có sẵn ({existing.mention}).")
+            return await ctx.reply(
+                f"✅ Kênh `{service.TRIGGER_NAME}` đã có sẵn ({existing.mention})."
+            )
 
         await ctx.typing()
         try:
-            channel = await ctx.guild.create_voice_channel(name=service.TRIGGER_NAME, reason="TempVoice: setup kênh trigger")
+            channel = await ctx.guild.create_voice_channel(
+                name=service.TRIGGER_NAME, reason="TempVoice: setup kênh trigger"
+            )
         except discord.Forbidden:
-            return await ctx.reply("❌ Bot không có quyền Manage Channels trong server này.")
-        await ctx.reply(f"✅ Đã tạo kênh trigger {channel.mention}. Ai bấm vào sẽ được tạo phòng riêng.")
+            return await ctx.reply(
+                "❌ Bot không có quyền Manage Channels trong server này."
+            )
+        await ctx.reply(
+            f"✅ Đã tạo kênh trigger {channel.mention}. Ai bấm vào sẽ được tạo phòng riêng."
+        )
 
     @commands.command(name="chaninfo")
     @commands.guild_only()
     async def chaninfo(self, ctx: commands.Context, channel_id: int):
         """Tra thông tin kênh theo ID."""
-        channel = ctx.guild.get_channel(channel_id) or ctx.guild.get_channel_or_thread(channel_id)
+        channel = ctx.guild.get_channel(channel_id) or ctx.guild.get_channel_or_thread(
+            channel_id
+        )
         if not channel:
-            return await ctx.reply(f"❌ Không tìm thấy kênh **{channel_id}** trong cache của server.")
+            return await ctx.reply(
+                f"❌ Không tìm thấy kênh **{channel_id}** trong cache của server."
+            )
 
         embed = discord.Embed(title="ℹ️ Thông tin kênh", color=discord.Color.blurple())
         embed.add_field(name="Tên", value=channel.mention, inline=True)
@@ -116,19 +131,33 @@ class TempVoice(commands.Cog):
         embed.add_field(name="ID", value=f"`{channel.id}`", inline=True)
         embed.add_field(
             name="Category",
-            value=channel.category.mention if getattr(channel, "category", None) else "Không có",
+            value=channel.category.mention
+            if getattr(channel, "category", None)
+            else "Không có",
             inline=True,
         )
-        embed.add_field(name="Ngày tạo", value=discord.utils.format_dt(channel.created_at, "R"), inline=True)
+        embed.add_field(
+            name="Ngày tạo",
+            value=discord.utils.format_dt(channel.created_at, "R"),
+            inline=True,
+        )
 
         if isinstance(channel, discord.VoiceChannel):
-            embed.add_field(name="👥 Trong phòng", value=str(len(channel.members)), inline=True)
+            embed.add_field(
+                name="👥 Trong phòng", value=str(len(channel.members)), inline=True
+            )
             embed.add_field(
                 name="👤 Giới hạn",
-                value=str(channel.user_limit) if channel.user_limit else "Không giới hạn",
+                value=str(channel.user_limit)
+                if channel.user_limit
+                else "Không giới hạn",
                 inline=True,
             )
-            embed.add_field(name="📌 Status", value=getattr(channel, "status", None) or "Không có", inline=True)
+            embed.add_field(
+                name="📌 Status",
+                value=getattr(channel, "status", None) or "Không có",
+                inline=True,
+            )
 
         row = await repository.get_by_channel(channel_id)
         if row:
@@ -141,12 +170,21 @@ class TempVoice(commands.Cog):
                 ),
                 inline=False,
             )
-        elif isinstance(channel, discord.VoiceChannel) and channel.name == service.TRIGGER_NAME:
-            embed.add_field(name="ℹ️ Ghi chú", value="Đây là kênh **trigger** tạo phòng temp.", inline=False)
+        elif (
+            isinstance(channel, discord.VoiceChannel)
+            and channel.name == service.TRIGGER_NAME
+        ):
+            embed.add_field(
+                name="ℹ️ Ghi chú",
+                value="Đây là kênh **trigger** tạo phòng temp.",
+                inline=False,
+            )
 
         await ctx.reply(embed=embed)
 
-    async def _create_room_for(self, member: discord.Member, trigger: discord.VoiceChannel) -> None:
+    async def _create_room_for(
+        self, member: discord.Member, trigger: discord.VoiceChannel
+    ) -> None:
         try:
             await service.create_room(self.bot, member, trigger)
         except discord.Forbidden as exc:
@@ -164,5 +202,5 @@ class TempVoice(commands.Cog):
     async def _try_dm(self, member: discord.Member, content: str) -> None:
         try:
             await member.send(content)
-        except (discord.Forbidden, discord.HTTPException):
+        except discord.Forbidden, discord.HTTPException:
             pass

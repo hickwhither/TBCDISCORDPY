@@ -16,3 +16,4 @@ build
 .env.local
 test.html
 README.md
+data

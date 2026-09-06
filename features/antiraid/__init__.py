@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+
 from features.antiraid import service
 
 
@@ -11,19 +12,19 @@ class AntiRaid(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def mark(self, ctx: commands.Context):
         """Đánh dấu channel anti-raid"""
         await service.mark_channel(ctx)
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def unmark(self, ctx: commands.Context):
         """Xóa đánh dấu channel anti-raid"""
         await service.unmark_channel(ctx)
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def antilist(self, ctx: commands.Context):
         """List all channels with anti-raid enabled."""

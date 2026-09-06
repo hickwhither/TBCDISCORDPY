@@ -1,4 +1,5 @@
 from sqlalchemy import select
+
 from core.database import async_session
 from features.tempvoice.models import TempVoiceChannel
 
@@ -19,14 +20,18 @@ async def get_all() -> list[TempVoiceChannel]:
         return list(result.scalars().all())
 
 
-async def add(channel_id: int, guild_id: int, owner_id: int, panel_message_id: int | None = None) -> None:
+async def add(
+    channel_id: int, guild_id: int, owner_id: int, panel_message_id: int | None = None
+) -> None:
     async with async_session() as session:
-        session.add(TempVoiceChannel(
-            channel_id=channel_id,
-            guild_id=guild_id,
-            owner_id=owner_id,
-            panel_message_id=panel_message_id,
-        ))
+        session.add(
+            TempVoiceChannel(
+                channel_id=channel_id,
+                guild_id=guild_id,
+                owner_id=owner_id,
+                panel_message_id=panel_message_id,
+            )
+        )
         await session.commit()
 
 

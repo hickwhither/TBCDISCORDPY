@@ -1,4 +1,5 @@
 import discord
+
 from features.antiraid import repository
 
 MARK_MESSAGE = """
@@ -23,7 +24,7 @@ async def mark_channel(ctx: discord.ext.commands.Context) -> None:
             ),
             color=discord.Color.red(),
         )
-        embed.set_footer(text=f"Đã ban: 0")
+        embed.set_footer(text="Đã ban: 0")
         message = await ctx.send(embed=embed)
 
     await repository.add_channel(
@@ -62,7 +63,7 @@ async def get_marked_list(bot: discord.ext.commands.Bot) -> list[str]:
 
 
 async def check_ban(message: discord.Message) -> None:
-    
+
     if message.author.bot:
         return
     if not message.guild:
@@ -98,5 +99,5 @@ async def _update_warning_message(channel: discord.TextChannel, ban_count: int) 
         embed = message.embeds[0]
         embed.set_footer(text=f"Đã ban: {ban_count}")
         await message.edit(embed=embed)
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         pass

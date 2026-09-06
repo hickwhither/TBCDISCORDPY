@@ -15,20 +15,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    develop:
-      watch:
-        - action: sync
-          path: ./core
-          target: /app/core
-        - action: sync
-          path: ./features
-          target: /app/features
-        - action: sync
-          path: ./models
-          target: /app/models
-        - action: sync
-          path: ./repository
-          target: /app/repository
-        - action: sync
-          path: ./main.py
-          target: /app/main.py

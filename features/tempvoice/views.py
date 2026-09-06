@@ -11,16 +11,19 @@ THUMBNAIL_URL = os.environ.get("TEMP_VOICE_IMAGE", "")
 _MISSING = discord.utils.MISSING
 
 
-async def _reply_ephemeral(interaction: discord.Interaction, content: str, *, delay: float = 5, **kwargs) -> None:
+async def _reply_ephemeral(
+    interaction: discord.Interaction, content: str, *, delay: float = 5, **kwargs
+) -> None:
     try:
         msg = await interaction.followup.send(content, **kwargs)
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         return
     await asyncio.sleep(delay)
     try:
         await msg.delete()
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         pass
+
 
 OWNER_PERMS = discord.PermissionOverwrite(
     view_channel=True,
@@ -37,7 +40,9 @@ OWNER_PERMS = discord.PermissionOverwrite(
 )
 
 
-def build_embed(guild: discord.Guild, channel: discord.VoiceChannel, owner: discord.Member) -> discord.Embed:
+def build_embed(
+    guild: discord.Guild, channel: discord.VoiceChannel, owner: discord.Member
+) -> discord.Embed:
     everyone = channel.overwrites_for(guild.default_role)
     locked = everyone.connect is False
     hidden = everyone.view_channel is False
@@ -64,7 +69,9 @@ async def refresh_panel(channel: discord.VoiceChannel) -> None:
     await _edit_panel(channel.guild, channel, row)
 
 
-async def _edit_panel(guild: discord.Guild, channel: discord.VoiceChannel, row, view=_MISSING) -> None:
+async def _edit_panel(
+    guild: discord.Guild, channel: discord.VoiceChannel, row, view=_MISSING
+) -> None:
     if not row or not row.panel_message_id:
         return
     owner = guild.get_member(row.owner_id)
@@ -73,7 +80,7 @@ async def _edit_panel(guild: discord.Guild, channel: discord.VoiceChannel, row, 
     try:
         message = await channel.fetch_message(row.panel_message_id)
         await message.edit(embed=build_embed(guild, channel, owner), view=view)
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         pass
 
 
@@ -85,10 +92,14 @@ class _OwnerCheckView(ui.View):
     async def owner_check(self, interaction: discord.Interaction) -> bool:
         row = await repository.get_by_channel(self.channel_id)
         if not row:
-            await interaction.response.send_message("❌ Phòng này không còn tồn tại.", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Phòng này không còn tồn tại.", ephemeral=True
+            )
             return False
         if interaction.user.id != row.owner_id:
-            await interaction.response.send_message("❌ Bạn không phải chủ phòng.", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Bạn không phải chủ phòng.", ephemeral=True
+            )
             return False
         return True
 
@@ -133,50 +144,85 @@ class CommandSelect(ui.Select):
         await _dispatch(interaction, self.channel_id, self.values[0], self.view)
 
 
-async def _dispatch(interaction: discord.Interaction, channel_id: int, action: str, panel_view=_MISSING) -> None:
+async def _dispatch(
+    interaction: discord.Interaction, channel_id: int, action: str, panel_view=_MISSING
+) -> None:
     guild = interaction.guild
     channel = guild.get_channel(channel_id)
 
     if action in ("rename", "limit", "status"):
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
-        modal = {"rename": RenameModal, "limit": LimitModal, "status": StatusModal}[action]
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
+        modal = {"rename": RenameModal, "limit": LimitModal, "status": StatusModal}[
+            action
+        ]
         await interaction.response.send_modal(modal(channel_id, panel_view))
 
     elif action == "lock":
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
         locked = channel.overwrites_for(guild.default_role).connect is False
         await interaction.response.defer(ephemeral=True)
-        await channel.set_permissions(guild.default_role, overwrite=discord.PermissionOverwrite(connect=locked))
-        await _edit_panel(guild, channel, await repository.get_by_channel(channel_id), panel_view)
-        text = "🔒 Đã khóa phòng, không ai vào được nữa." if not locked else "🔓 Đã mở phòng."
+        await channel.set_permissions(
+            guild.default_role, overwrite=discord.PermissionOverwrite(connect=locked)
+        )
+        await _edit_panel(
+            guild, channel, await repository.get_by_channel(channel_id), panel_view
+        )
+        text = (
+            "🔒 Đã khóa phòng, không ai vào được nữa."
+            if not locked
+            else "🔓 Đã mở phòng."
+        )
         await _reply_ephemeral(interaction, text)
 
     elif action == "hide":
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
         hidden = channel.overwrites_for(guild.default_role).view_channel is False
         await interaction.response.defer(ephemeral=True)
-        await channel.set_permissions(guild.default_role, overwrite=discord.PermissionOverwrite(view_channel=hidden))
-        await _edit_panel(guild, channel, await repository.get_by_channel(channel_id), panel_view)
-        text = "🙈 Đã ẩn phòng khỏi danh sách kênh." if not hidden else "👁 Đã hiện phòng."
+        await channel.set_permissions(
+            guild.default_role,
+            overwrite=discord.PermissionOverwrite(view_channel=hidden),
+        )
+        await _edit_panel(
+            guild, channel, await repository.get_by_channel(channel_id), panel_view
+        )
+        text = (
+            "🙈 Đã ẩn phòng khỏi danh sách kênh." if not hidden else "👁 Đã hiện phòng."
+        )
         await _reply_ephemeral(interaction, text)
 
     elif action in ("invite", "kick", "transfer"):
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
         row = await repository.get_by_channel(channel_id)
         if not row:
-            return await interaction.response.send_message("❌ Phòng không còn tồn tại.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng không còn tồn tại.", ephemeral=True
+            )
 
         if action == "invite":
-            candidates = [m for m in guild.members if not m.bot and m not in channel.members]
+            candidates = [
+                m for m in guild.members if not m.bot and m not in channel.members
+            ]
             placeholder = "Chọn người mời"
             prompt = "👇 Chọn người mời từ danh sách, hoặc bấm **✍️ Nhập ID/Username**:"
         else:
-            candidates = [m for m in channel.members if m.id != row.owner_id and not m.bot]
-            placeholder = "Chọn người đuổi" if action == "kick" else "Chọn chủ phòng mới"
+            candidates = [
+                m for m in channel.members if m.id != row.owner_id and not m.bot
+            ]
+            placeholder = (
+                "Chọn người đuổi" if action == "kick" else "Chọn chủ phòng mới"
+            )
             prompt = (
                 "👇 Chọn người muốn đuổi, hoặc bấm **✍️ Nhập ID/Username**:"
                 if action == "kick"
@@ -196,7 +242,14 @@ async def _dispatch(interaction: discord.Interaction, channel_id: int, action: s
 
         await interaction.response.send_message(
             content=prompt,
-            view=PickMemberView(channel_id, action, placeholder, candidates, interaction.user.id, panel_view),
+            view=PickMemberView(
+                channel_id,
+                action,
+                placeholder,
+                candidates,
+                interaction.user.id,
+                panel_view,
+            ),
             ephemeral=True,
         )
 
@@ -210,7 +263,12 @@ async def _dispatch(interaction: discord.Interaction, channel_id: int, action: s
 
 
 class RenameModal(ui.Modal, title="Đổi tên phòng"):
-    name = ui.TextInput(label="Tên phòng mới", min_length=1, max_length=100, placeholder="Nhập tên phòng...")
+    name = ui.TextInput(
+        label="Tên phòng mới",
+        min_length=1,
+        max_length=100,
+        placeholder="Nhập tên phòng...",
+    )
 
     def __init__(self, channel_id: int, panel_view=_MISSING) -> None:
         super().__init__()
@@ -220,15 +278,29 @@ class RenameModal(ui.Modal, title="Đổi tên phòng"):
     async def on_submit(self, interaction: discord.Interaction) -> None:
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
         await interaction.response.defer(ephemeral=True)
         await channel.edit(name=self.name.value)
-        await _edit_panel(interaction.guild, channel, await repository.get_by_channel(self.channel_id), self.panel_view)
-        await _reply_ephemeral(interaction, f"✅ Đã đổi tên thành: **{self.name.value}**")
+        await _edit_panel(
+            interaction.guild,
+            channel,
+            await repository.get_by_channel(self.channel_id),
+            self.panel_view,
+        )
+        await _reply_ephemeral(
+            interaction, f"✅ Đã đổi tên thành: **{self.name.value}**"
+        )
 
 
 class LimitModal(ui.Modal, title="Giới hạn người vào phòng"):
-    limit = ui.TextInput(label="Số người tối đa (1-99, 0 = không giới hạn)", min_length=1, max_length=2, placeholder="0")
+    limit = ui.TextInput(
+        label="Số người tối đa (1-99, 0 = không giới hạn)",
+        min_length=1,
+        max_length=2,
+        placeholder="0",
+    )
 
     def __init__(self, channel_id: int, panel_view=_MISSING) -> None:
         super().__init__()
@@ -238,20 +310,34 @@ class LimitModal(ui.Modal, title="Giới hạn người vào phòng"):
     async def on_submit(self, interaction: discord.Interaction) -> None:
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
         raw = self.limit.value.strip()
         if not raw.isdigit():
-            return await interaction.response.send_message("❌ Vui lòng nhập số từ 0 đến 99.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Vui lòng nhập số từ 0 đến 99.", ephemeral=True
+            )
         await interaction.response.defer(ephemeral=True)
         value = min(int(raw), 99)
         await channel.edit(user_limit=value)
-        await _edit_panel(interaction.guild, channel, await repository.get_by_channel(self.channel_id), self.panel_view)
+        await _edit_panel(
+            interaction.guild,
+            channel,
+            await repository.get_by_channel(self.channel_id),
+            self.panel_view,
+        )
         text = "Không giới hạn" if value == 0 else f"{value} người"
         await _reply_ephemeral(interaction, f"✅ Đã đặt giới hạn: **{text}**.")
 
 
 class StatusModal(ui.Modal, title="Đổi trạng thái kênh"):
-    status = ui.TextInput(label="Trạng thái kênh (bỏ trống để xóa)", max_length=500, required=False, placeholder="Đang nghiên cứu...")
+    status = ui.TextInput(
+        label="Trạng thái kênh (bỏ trống để xóa)",
+        max_length=500,
+        required=False,
+        placeholder="Đang nghiên cứu...",
+    )
 
     def __init__(self, channel_id: int, panel_view=_MISSING) -> None:
         super().__init__()
@@ -261,19 +347,26 @@ class StatusModal(ui.Modal, title="Đổi trạng thái kênh"):
     async def on_submit(self, interaction: discord.Interaction) -> None:
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
         value = self.status.value.strip() or None
         await interaction.response.defer(ephemeral=True)
         try:
             await channel.edit(status=value)
-        except (discord.Forbidden, discord.HTTPException):
+        except discord.Forbidden, discord.HTTPException:
             text = (
                 "❌ Không đặt được trạng thái kênh (server cần ít nhất 1 Level Boost "
                 "và bot cần quyền Manage Channels)."
             )
         else:
             text = "✅ Đã cập nhật trạng thái kênh."
-        await _edit_panel(interaction.guild, channel, await repository.get_by_channel(self.channel_id), self.panel_view)
+        await _edit_panel(
+            interaction.guild,
+            channel,
+            await repository.get_by_channel(self.channel_id),
+            self.panel_view,
+        )
         await _reply_ephemeral(interaction, text)
 
 
@@ -296,7 +389,7 @@ async def _resolve_member(guild: discord.Guild, value: str) -> discord.Member | 
             return member
         try:
             return await guild.fetch_member(user_id)
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             return None
 
     search = value.casefold()
@@ -317,7 +410,12 @@ async def _resolve_member(guild: discord.Guild, value: str) -> discord.Member | 
 
 
 class MemberInputModal(ui.Modal, title="Nhập thành viên"):
-    target = ui.TextInput(label="Mention / ID / Username", min_length=1, max_length=100, placeholder="@tên · 1234567890 · username")
+    target = ui.TextInput(
+        label="Mention / ID / Username",
+        min_length=1,
+        max_length=100,
+        placeholder="@tên · 1234567890 · username",
+    )
 
     def __init__(self, channel_id: int, action: str, panel_view=_MISSING) -> None:
         super().__init__()
@@ -329,7 +427,9 @@ class MemberInputModal(ui.Modal, title="Nhập thành viên"):
         guild = interaction.guild
         channel = guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
 
         await interaction.response.defer(ephemeral=True)
         member = await _resolve_member(guild, self.target.value)
@@ -349,28 +449,45 @@ class MemberInputModal(ui.Modal, title="Nhập thành viên"):
         elif self.action == "kick":
             row = await repository.get_by_channel(self.channel_id)
             if row and member.id == row.owner_id:
-                return await _reply_ephemeral(interaction, "❌ Không thể đuổi chủ phòng.")
+                return await _reply_ephemeral(
+                    interaction, "❌ Không thể đuổi chủ phòng."
+                )
             if member not in channel.members:
-                return await _reply_ephemeral(interaction, f"{member.mention} không có trong phòng.")
+                return await _reply_ephemeral(
+                    interaction, f"{member.mention} không có trong phòng."
+                )
             try:
                 await member.move_to(None)
-            except (discord.Forbidden, discord.HTTPException):
+            except discord.Forbidden, discord.HTTPException:
                 return await _reply_ephemeral(
                     interaction,
                     "❌ Không thể đuổi người này (kiểm tra quyền Move Members của bot).",
                 )
             text = f"🚪 Đã đuổi {member.mention} khỏi phòng."
 
-        await _edit_panel(guild, channel, await repository.get_by_channel(self.channel_id), self.panel_view)
+        await _edit_panel(
+            guild,
+            channel,
+            await repository.get_by_channel(self.channel_id),
+            self.panel_view,
+        )
         await _reply_ephemeral(interaction, text)
 
 
 class MemberSelect(ui.Select):
-    def __init__(self, channel_id: int, action: str, placeholder: str, members: list[discord.Member]) -> None:
+    def __init__(
+        self,
+        channel_id: int,
+        action: str,
+        placeholder: str,
+        members: list[discord.Member],
+    ) -> None:
         self.channel_id = channel_id
         self.action = action
         options = [
-            discord.SelectOption(label=(m.display_name or m.name)[:100], value=str(m.id))
+            discord.SelectOption(
+                label=(m.display_name or m.name)[:100], value=str(m.id)
+            )
             for m in members[:25]
         ]
         if not options:
@@ -387,7 +504,9 @@ class MemberSelect(ui.Select):
         guild = interaction.guild
         channel = guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Phòng đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Phòng đã bị xóa.", ephemeral=True
+            )
 
         await interaction.response.defer(ephemeral=True)
         ids = [int(v) for v in self.values if v.isdigit()]
@@ -401,7 +520,12 @@ class MemberSelect(ui.Select):
                     await channel.set_permissions(m, view_channel=True, connect=True)
                     added.append(m.mention)
             text = f"✅ Đã cấp quyền vào phòng cho: {', '.join(added) if added else 'ai cả'}"
-            await _edit_panel(guild, channel, await repository.get_by_channel(channel.id), getattr(self.view, "panel_view", _MISSING))
+            await _edit_panel(
+                guild,
+                channel,
+                await repository.get_by_channel(channel.id),
+                getattr(self.view, "panel_view", _MISSING),
+            )
 
         elif self.action == "kick":
             kicked = 0
@@ -413,21 +537,35 @@ class MemberSelect(ui.Select):
                     except discord.HTTPException:
                         pass
             text = f"🚪 Đã đuổi {kicked} người khỏi phòng."
-            await _edit_panel(guild, channel, await repository.get_by_channel(channel.id), getattr(self.view, "panel_view", _MISSING))
+            await _edit_panel(
+                guild,
+                channel,
+                await repository.get_by_channel(channel.id),
+                getattr(self.view, "panel_view", _MISSING),
+            )
 
         elif self.action == "transfer":
             if not members:
-                return await _reply_ephemeral(interaction, "❌ Không tìm thấy người đó.")
+                return await _reply_ephemeral(
+                    interaction, "❌ Không tìm thấy người đó."
+                )
             target = members[0]
             row = await repository.get_by_channel(channel.id)
             if not row:
-                return await _reply_ephemeral(interaction, "❌ Phòng không còn tồn tại.")
+                return await _reply_ephemeral(
+                    interaction, "❌ Phòng không còn tồn tại."
+                )
             old = guild.get_member(row.owner_id)
             await channel.set_permissions(target, overwrite=OWNER_PERMS)
             if old and old.id != target.id and old in channel.members:
                 await channel.set_permissions(old, overwrite=None)
             await repository.set_owner(channel.id, target.id)
-            await _edit_panel(guild, channel, await repository.get_by_channel(channel.id), getattr(self.view, "panel_view", _MISSING))
+            await _edit_panel(
+                guild,
+                channel,
+                await repository.get_by_channel(channel.id),
+                getattr(self.view, "panel_view", _MISSING),
+            )
             text = f"🔄 Đã chuyển chủ phòng cho {target.mention}"
 
         await _reply_ephemeral(interaction, text)
@@ -435,22 +573,34 @@ class MemberSelect(ui.Select):
 
 class _ManualInputButton(ui.Button):
     def __init__(self, channel_id: int, action: str, owner_id: int) -> None:
-        super().__init__(label="Nhập ID/Username", emoji="✍️", style=ButtonStyle.secondary)
+        super().__init__(
+            label="Nhập ID/Username", emoji="✍️", style=ButtonStyle.secondary
+        )
         self.channel_id = channel_id
         self.action = action
         self.owner_id = owner_id
 
     async def callback(self, interaction: discord.Interaction) -> None:
         if interaction.user.id != self.owner_id:
-            return await interaction.response.send_message("❌ Bạn không phải chủ phòng.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Bạn không phải chủ phòng.", ephemeral=True
+            )
         await interaction.response.send_modal(
-            MemberInputModal(self.channel_id, self.action, getattr(self.view, "panel_view", _MISSING))
+            MemberInputModal(
+                self.channel_id, self.action, getattr(self.view, "panel_view", _MISSING)
+            )
         )
 
 
 class PickMemberView(ui.View):
     def __init__(
-        self, channel_id: int, action: str, placeholder: str, members: list[discord.Member], owner_id: int, panel_view=_MISSING
+        self,
+        channel_id: int,
+        action: str,
+        placeholder: str,
+        members: list[discord.Member],
+        owner_id: int,
+        panel_view=_MISSING,
     ) -> None:
         super().__init__(timeout=180)
         self.panel_view = panel_view
@@ -470,11 +620,17 @@ class _ConfirmDeleteView(ui.View):
         await interaction.response.edit_message(content="Đã hủy thao tác.", view=None)
         self.stop()
 
-    @ui.button(label="Xóa phòng", style=ButtonStyle.danger, custom_id="tv_confirm_delete")
+    @ui.button(
+        label="Xóa phòng", style=ButtonStyle.danger, custom_id="tv_confirm_delete"
+    )
     async def confirm(self, interaction: discord.Interaction, _) -> None:
         if interaction.user.id != self.owner_id:
-            return await interaction.response.send_message("❌ Không được phép.", ephemeral=True)
-        await interaction.response.edit_message(content="🗑 Đang xóa phòng...", view=None)
+            return await interaction.response.send_message(
+                "❌ Không được phép.", ephemeral=True
+            )
+        await interaction.response.edit_message(
+            content="🗑 Đang xóa phòng...", view=None
+        )
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
             text = "❌ Phòng đã bị xóa trước đó."
@@ -483,7 +639,7 @@ class _ConfirmDeleteView(ui.View):
                 await channel.delete()
             except discord.Forbidden:
                 text = "❌ Không đủ quyền xóa kênh (bot cần quyền Manage Channels)."
-            except (discord.NotFound, discord.HTTPException):
+            except discord.NotFound, discord.HTTPException:
                 text = None
             else:
                 await repository.remove(self.channel_id)
@@ -492,6 +648,6 @@ class _ConfirmDeleteView(ui.View):
             await _reply_ephemeral(interaction, text)
         try:
             await interaction.delete_original_response()
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             pass
         self.stop()

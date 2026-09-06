@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 
 import discord
@@ -6,11 +5,9 @@ import discord
 from features.tickets import repository
 from features.tickets.views import (
     AUTO_CLOSE_HOURS,
-    GUEST_PERMS,
-    MAX_TICKETS_PER_USER,
     WARN_BEFORE_MINUTES,
-    _utc_naive,
     TicketCreateView,
+    _utc_naive,
 )
 
 DELETE_AFTER_MINUTES = AUTO_CLOSE_HOURS * 60
@@ -52,7 +49,7 @@ async def create_setup_panel(ctx: discord.ext.commands.Context) -> None:
     await repository.add_panel(ctx.channel.id, ctx.guild.id, message.id, category_id)
     try:
         await ctx.message.delete()
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         pass
 
 
@@ -73,7 +70,7 @@ async def auto_check(bot: discord.ext.commands.Bot) -> None:
                     "⏰ Ticket này không có phản hồi trong thời gian dài nên sẽ tự động bị xóa."
                 )
                 await channel.delete(reason="Ticket: tự động xóa do không hoạt động")
-            except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+            except discord.Forbidden, discord.NotFound, discord.HTTPException:
                 pass
             await repository.remove(row.channel_id)
             continue
@@ -85,6 +82,6 @@ async def auto_check(bot: discord.ext.commands.Bot) -> None:
                     f"⚠️ Ticket này không hoạt động. Ticket sẽ tự động bị xóa sau "
                     f"**{remaining} phút** nữa nếu không có phản hồi."
                 )
-            except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+            except discord.Forbidden, discord.NotFound, discord.HTTPException:
                 pass
             await repository.set_warned(row.channel_id)

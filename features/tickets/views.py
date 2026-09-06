@@ -69,7 +69,9 @@ STAFF_PERMS = discord.PermissionOverwrite(
 def is_staff(member: discord.Member) -> bool:
     if member.guild_permissions.administrator:
         return True
-    return any(role.name.casefold() == STAFF_ROLE_NAME.casefold() for role in member.roles)
+    return any(
+        role.name.casefold() == STAFF_ROLE_NAME.casefold() for role in member.roles
+    )
 
 
 def _utc_naive(dt: datetime) -> datetime:
@@ -91,7 +93,12 @@ async def _unique_ticket_name(guild: discord.Guild) -> str:
 
 
 async def _staff_overwrites(guild: discord.Guild) -> dict:
-    overlords = [r for r in guild.roles if r.name.casefold() == STAFF_ROLE_NAME.casefold() or r.permissions.administrator]
+    overlords = [
+        r
+        for r in guild.roles
+        if r.name.casefold() == STAFF_ROLE_NAME.casefold()
+        or r.permissions.administrator
+    ]
     manageable = {r for r in overlords if r.is_assignable()}
     return {role: STAFF_PERMS for role in manageable}
 
@@ -148,12 +155,12 @@ async def _reply_ephemeral(
 ) -> None:
     try:
         msg = await interaction.followup.send(content, **kwargs)
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         return
     await asyncio.sleep(delay)
     try:
         await msg.delete()
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         pass
 
 
@@ -182,7 +189,11 @@ def build_embed(
         ),
         color=discord.Color.green() if status == "open" else discord.Color.red(),
     )
-    embed.add_field(name="👤 Chủ ticket", value=owner.mention if owner else f"`{owner_id}`", inline=True)
+    embed.add_field(
+        name="👤 Chủ ticket",
+        value=owner.mention if owner else f"`{owner_id}`",
+        inline=True,
+    )
     embed.add_field(name="📌 Trạng thái", value=status_text, inline=True)
     embed.add_field(name="📅 Mở lúc", value=opened, inline=True)
     embed.add_field(name="🔗 Kênh", value=channel.mention, inline=True)
@@ -199,13 +210,17 @@ async def _edit_panel(guild: discord.Guild, channel: discord.TextChannel, row) -
     if not row or not row.panel_message_id:
         return
     embed = build_embed(
-        guild, channel, owner_id=row.owner_id, status=row.status, created_at=row.created_at
+        guild,
+        channel,
+        owner_id=row.owner_id,
+        status=row.status,
+        created_at=row.created_at,
     )
     view = TicketPanelView(guild, channel.id, status=row.status)
     try:
         message = await channel.fetch_message(row.panel_message_id)
         await message.edit(embed=embed, view=view)
-    except (discord.NotFound, discord.HTTPException):
+    except discord.NotFound, discord.HTTPException:
         pass
 
 
@@ -215,13 +230,22 @@ class TicketCreateView(ui.View):
         self.bot = bot
         self.category_id = category_id
 
-    @ui.button(label="Tạo Ticket", emoji="🎫", style=ButtonStyle.primary, custom_id="ticket_create")
+    @ui.button(
+        label="Tạo Ticket",
+        emoji="🎫",
+        style=ButtonStyle.primary,
+        custom_id="ticket_create",
+    )
     async def create(self, interaction: discord.Interaction, _) -> None:
         guild = interaction.guild
         existing = await repository.list_open_by_owner(guild.id, interaction.user.id)
         if len(existing) >= MAX_TICKETS_PER_USER:
             lines = "\n".join(
-                (guild.get_channel(t.channel_id).mention if guild.get_channel(t.channel_id) else f"`{t.channel_id}`")
+                (
+                    guild.get_channel(t.channel_id).mention
+                    if guild.get_channel(t.channel_id)
+                    else f"`{t.channel_id}`"
+                )
                 for t in existing[:MAX_TICKETS_PER_USER]
             )
             text = (
@@ -243,17 +267,24 @@ class TicketCreateView(ui.View):
             text = "⚠️ Bot không đủ quyền **Manage Channels** để tạo kênh ticket."
             return await _reply_ephemeral(interaction, text)
         except discord.HTTPException as exc:
-            return await _reply_ephemeral(interaction, f"⚠️ Không tạo được ticket (lỗi API): {exc}")
-        await _reply_ephemeral(interaction, f"✅ Đã tạo ticket cho bạn: {channel.mention}", delay=8)
+            return await _reply_ephemeral(
+                interaction, f"⚠️ Không tạo được ticket (lỗi API): {exc}"
+            )
+        await _reply_ephemeral(
+            interaction, f"✅ Đã tạo ticket cho bạn: {channel.mention}", delay=8
+        )
 
 
 async def _allowed(interaction: discord.Interaction, row) -> bool:
     if not row:
-        await interaction.response.send_message("❌ Ticket không còn tồn tại.", ephemeral=True)
+        await interaction.response.send_message(
+            "❌ Ticket không còn tồn tại.", ephemeral=True
+        )
         return False
     if interaction.user.id != row.owner_id and not is_staff(interaction.user):
         await interaction.response.send_message(
-            "❌ Chỉ chủ ticket hoặc Staff mới được thực hiện hành động này.", ephemeral=True
+            "❌ Chỉ chủ ticket hoặc Staff mới được thực hiện hành động này.",
+            ephemeral=True,
         )
         return False
     return True
@@ -275,17 +306,23 @@ class _CloseButton(ui.Button):
         if not await _allowed(interaction, row):
             return
         if row.status != "open":
-            return await interaction.response.send_message("ℹ️ Ticket này đã được đóng.", ephemeral=True)
+            return await interaction.response.send_message(
+                "ℹ️ Ticket này đã được đóng.", ephemeral=True
+            )
 
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Ticket đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Ticket đã bị xóa.", ephemeral=True
+            )
 
         await interaction.response.defer(ephemeral=True)
         owner = interaction.guild.get_member(row.owner_id)
         if owner:
             await channel.set_permissions(
-                owner, overwrite=_owner_overwrite(send=False), reason="Ticket: đóng ticket"
+                owner,
+                overwrite=_owner_overwrite(send=False),
+                reason="Ticket: đóng ticket",
             )
         await repository.set_status(self.channel_id, "closed")
         await refresh_panel(channel)
@@ -312,17 +349,23 @@ class _ReopenButton(ui.Button):
         if not await _allowed(interaction, row):
             return
         if row.status != "closed":
-            return await interaction.response.send_message("ℹ️ Ticket này đang mở.", ephemeral=True)
+            return await interaction.response.send_message(
+                "ℹ️ Ticket này đang mở.", ephemeral=True
+            )
 
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
-            return await interaction.response.send_message("❌ Ticket đã bị xóa.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Ticket đã bị xóa.", ephemeral=True
+            )
 
         await interaction.response.defer(ephemeral=True)
         owner = interaction.guild.get_member(row.owner_id)
         if owner:
             await channel.set_permissions(
-                owner, overwrite=_owner_overwrite(send=True), reason="Ticket: mở lại ticket"
+                owner,
+                overwrite=_owner_overwrite(send=True),
+                reason="Ticket: mở lại ticket",
             )
         await repository.set_status(self.channel_id, "open")
         await refresh_panel(channel)
@@ -343,7 +386,9 @@ class _DeleteButton(ui.Button):
     async def callback(self, interaction: discord.Interaction) -> None:
         row = await repository.get_by_channel(self.channel_id)
         if not row:
-            return await interaction.response.send_message("❌ Ticket không còn tồn tại.", ephemeral=True)
+            return await interaction.response.send_message(
+                "❌ Ticket không còn tồn tại.", ephemeral=True
+            )
         if not is_staff(interaction.user):
             return await interaction.response.send_message(
                 "❌ Chỉ **Staff/Admin** mới được xóa ticket.", ephemeral=True
@@ -377,11 +422,17 @@ class _ConfirmDeleteView(ui.View):
         await interaction.response.edit_message(content="Đã hủy thao tác.", view=None)
         self.stop()
 
-    @ui.button(label="Xác nhận xóa", style=ButtonStyle.danger, custom_id="tk_confirm_delete")
+    @ui.button(
+        label="Xác nhận xóa", style=ButtonStyle.danger, custom_id="tk_confirm_delete"
+    )
     async def confirm(self, interaction: discord.Interaction, _) -> None:
         if interaction.user.id != self.actor_id:
-            return await interaction.response.send_message("❌ Không được phép.", ephemeral=True)
-        await interaction.response.edit_message(content="🗑 Đang xóa ticket...", view=None)
+            return await interaction.response.send_message(
+                "❌ Không được phép.", ephemeral=True
+            )
+        await interaction.response.edit_message(
+            content="🗑 Đang xóa ticket...", view=None
+        )
         channel = interaction.guild.get_channel(self.channel_id)
         if not channel:
             text = "❌ Ticket đã bị xóa trước đó."
@@ -390,7 +441,7 @@ class _ConfirmDeleteView(ui.View):
                 await channel.delete(reason="Ticket: xóa ticket")
             except discord.Forbidden:
                 text = "❌ Bot không đủ quyền xóa kênh (cần quyền Manage Channels)."
-            except (discord.NotFound, discord.HTTPException):
+            except discord.NotFound, discord.HTTPException:
                 text = None
             else:
                 await repository.remove(self.channel_id)
@@ -399,7 +450,7 @@ class _ConfirmDeleteView(ui.View):
             await _reply_ephemeral(interaction, text)
         try:
             await interaction.delete_original_response()
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             pass
         self.stop()
 
@@ -423,7 +474,7 @@ async def _resolve_member(guild: discord.Guild, value: str) -> discord.Member | 
             return member
         try:
             return await guild.fetch_member(user_id)
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             return None
 
     search = value.casefold()
@@ -444,7 +495,10 @@ async def _resolve_member(guild: discord.Guild, value: str) -> discord.Member | 
 
 
 async def _apply_member_change(
-    interaction: discord.Interaction, channel_id: int, action: str, member_ids: list[str]
+    interaction: discord.Interaction,
+    channel_id: int,
+    action: str,
+    member_ids: list[str],
 ) -> str | None:
     """Thêm/xóa thành viên khỏi ticket. Trả về text xác nhận, None nếu đã báo lỗi."""
     guild = interaction.guild
@@ -455,7 +509,11 @@ async def _apply_member_change(
     if not row:
         return "❌ Ticket không còn tồn tại."
 
-    members = [m for raw in member_ids if raw.isdigit() and (m := guild.get_member(int(raw))) is not None]
+    members = [
+        m
+        for raw in member_ids
+        if raw.isdigit() and (m := guild.get_member(int(raw))) is not None
+    ]
     members = [m for m in members if m.id != row.owner_id]
     if not members:
         return "❌ Không tìm thấy thành viên."
@@ -467,11 +525,14 @@ async def _apply_member_change(
                 if channel.overwrites.get(m) is not None:
                     note.append(f"{m.mention} đã có quyền")
                 else:
-                    await channel.set_permissions(m, overwrite=GUEST_PERMS, reason="Ticket: thêm người vào ticket")
+                    await channel.set_permissions(
+                        m, overwrite=GUEST_PERMS, reason="Ticket: thêm người vào ticket"
+                    )
                     changed.append(m.mention)
-        except (discord.Forbidden, discord.HTTPException):
+        except discord.Forbidden, discord.HTTPException:
             await interaction.followup.send(
-                "❌ Bot không có quyền cập nhật quyền kênh (cần Manage Channels).", ephemeral=True
+                "❌ Bot không có quyền cập nhật quyền kênh (cần Manage Channels).",
+                ephemeral=True,
             )
             return None
     else:
@@ -481,11 +542,14 @@ async def _apply_member_change(
                 if channel.overwrites.get(m) is None:
                     note.append(f"{m.mention} không có quyền để xóa")
                 else:
-                    await channel.set_permissions(m, overwrite=None, reason="Ticket: xóa người khỏi ticket")
+                    await channel.set_permissions(
+                        m, overwrite=None, reason="Ticket: xóa người khỏi ticket"
+                    )
                     removed.append(m.mention)
-        except (discord.Forbidden, discord.HTTPException):
+        except discord.Forbidden, discord.HTTPException:
             await interaction.followup.send(
-                "❌ Bot không có quyền cập nhật quyền kênh (cần Manage Channels).", ephemeral=True
+                "❌ Bot không có quyền cập nhật quyền kênh (cần Manage Channels).",
+                ephemeral=True,
             )
             return None
 
@@ -501,16 +565,22 @@ async def _apply_member_change(
 
 
 class TicketMemberSelect(ui.Select):
-    def __init__(self, channel_id: int, action: str, members: list[discord.Member]) -> None:
+    def __init__(
+        self, channel_id: int, action: str, members: list[discord.Member]
+    ) -> None:
         self.channel_id = channel_id
         self.action = action
         self.members = members
         options = [
-            discord.SelectOption(label=(m.display_name or m.name)[:100], value=str(m.id))
+            discord.SelectOption(
+                label=(m.display_name or m.name)[:100], value=str(m.id)
+            )
             for m in members[:25]
         ]
         if not options:
-            options = [discord.SelectOption(label="Không có ai trong danh sách", value="none")]
+            options = [
+                discord.SelectOption(label="Không có ai trong danh sách", value="none")
+            ]
         super().__init__(
             placeholder="Chọn thành viên...",
             min_values=1,
@@ -523,11 +593,13 @@ class TicketMemberSelect(ui.Select):
         if self.values[0] == "none":
             return await interaction.response.defer()
         await interaction.response.defer()
-        text = await _apply_member_change(interaction, self.channel_id, self.action, self.values)
+        text = await _apply_member_change(
+            interaction, self.channel_id, self.action, self.values
+        )
         if text:
             try:
                 await interaction.message.edit(content=text, view=None)
-            except (discord.NotFound, discord.HTTPException):
+            except discord.NotFound, discord.HTTPException:
                 pass
         self.view.stop()
 
@@ -540,7 +612,9 @@ class TicketMemberModal(ui.Modal, title="Nhập thành viên"):
         placeholder="@tên · 1234567890 · username",
     )
 
-    def __init__(self, channel_id: int, action: str, source_message: discord.Message) -> None:
+    def __init__(
+        self, channel_id: int, action: str, source_message: discord.Message
+    ) -> None:
         super().__init__()
         self.channel_id = channel_id
         self.action = action
@@ -551,28 +625,37 @@ class TicketMemberModal(ui.Modal, title="Nhập thành viên"):
         member = await _resolve_member(interaction.guild, self.target.value)
         if not member:
             return await interaction.followup.send(
-                "❌ Không tìm thấy người này. Hãy dùng mention `@tên` hoặc ID đầy đủ.", ephemeral=True
+                "❌ Không tìm thấy người này. Hãy dùng mention `@tên` hoặc ID đầy đủ.",
+                ephemeral=True,
             )
-        text = await _apply_member_change(interaction, self.channel_id, self.action, [str(member.id)])
+        text = await _apply_member_change(
+            interaction, self.channel_id, self.action, [str(member.id)]
+        )
         if text:
             try:
                 await self.source_message.edit(content=text, view=None)
-            except (discord.NotFound, discord.HTTPException):
+            except discord.NotFound, discord.HTTPException:
                 pass
 
 
 class TicketManualButton(ui.Button):
     def __init__(self, channel_id: int, action: str) -> None:
-        super().__init__(label="Nhập ID/Username", emoji="✍️", style=ButtonStyle.secondary)
+        super().__init__(
+            label="Nhập ID/Username", emoji="✍️", style=ButtonStyle.secondary
+        )
         self.channel_id = channel_id
         self.action = action
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_modal(TicketMemberModal(self.channel_id, self.action, interaction.message))
+        await interaction.response.send_modal(
+            TicketMemberModal(self.channel_id, self.action, interaction.message)
+        )
 
 
 class TicketMemberPickView(ui.View):
-    def __init__(self, channel_id: int, action: str, members: list[discord.Member]) -> None:
+    def __init__(
+        self, channel_id: int, action: str, members: list[discord.Member]
+    ) -> None:
         super().__init__(timeout=180)
         self.channel_id = channel_id
         self.action = action

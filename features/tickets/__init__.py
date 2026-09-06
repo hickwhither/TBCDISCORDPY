@@ -4,7 +4,12 @@ import discord
 from discord.ext import commands, tasks
 
 from features.tickets import repository, service
-from features.tickets.views import TicketCreateView, TicketMemberPickView, TicketPanelView, is_staff
+from features.tickets.views import (
+    TicketCreateView,
+    TicketMemberPickView,
+    TicketPanelView,
+    is_staff,
+)
 
 CHECK_INTERVAL_MINUTES = float(os.environ.get("TICKET_CHECK_INTERVAL_MINUTES", "15"))
 
@@ -18,7 +23,7 @@ async def setup(bot: commands.Bot) -> None:
             continue
         try:
             await channel.fetch_message(row.message_id)
-        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+        except discord.NotFound, discord.Forbidden, discord.HTTPException:
             continue
         bot.add_view(TicketCreateView(bot, row.category_id), message_id=row.message_id)
 
@@ -28,9 +33,12 @@ async def setup(bot: commands.Bot) -> None:
             continue
         try:
             await channel.fetch_message(row.panel_message_id)
-        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+        except discord.NotFound, discord.Forbidden, discord.HTTPException:
             continue
-        bot.add_view(TicketPanelView(bot, row.channel_id, status=row.status), message_id=row.panel_message_id)
+        bot.add_view(
+            TicketPanelView(bot, row.channel_id, status=row.status),
+            message_id=row.panel_message_id,
+        )
 
 
 class Tickets(commands.Cog):
@@ -43,7 +51,9 @@ class Tickets(commands.Cog):
     def cog_unload(self) -> None:
         self.auto_check_task.cancel()
 
-    async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
+    async def cog_command_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ) -> None:
         if isinstance(error, commands.MissingRequiredArgument):
             usage = {
                 "ticketadd": ".ticketadd <username hoặc ID>",
@@ -81,12 +91,27 @@ class Tickets(commands.Cog):
             await repository.remove(channel.id)
             await repository.remove_panel(channel.id)
 
-    @commands.command(name="ticketsetup")
+    @commands.command(name="ticketsetup", hidden=True)
     @commands.is_owner()
     async def ticketsetup(self, ctx: commands.Context):
         """Gửi panel tạo ticket vào kênh hiện tại."""
         await service.create_setup_panel(ctx)
         await ctx.reply("✅ Panel tạo ticket đã được gửi vào kênh này.", delete_after=5)
+
+    @commands.command(name="ticketpanelremove", hidden=True)
+    @commands.is_owner()
+    async def ticketpanelremove(self, ctx: commands.Context):
+        """Xóa panel tạo ticket khỏi kênh hiện tại."""
+        row = await repository.get_panel(ctx.channel.id)
+        if not row:
+            return await ctx.reply("❌ Kênh này không có panel tạo ticket.")
+        try:
+            message = await ctx.channel.fetch_message(row.message_id)
+            await message.delete()
+        except discord.NotFound, discord.HTTPException:
+            pass
+        await repository.remove_panel(ctx.channel.id)
+        await ctx.reply("✅ Đã xóa panel tạo ticket khỏi kênh này.", delete_after=5)
 
     @commands.command(name="ticketlist")
     @commands.guild_only()
@@ -100,7 +125,9 @@ class Tickets(commands.Cog):
                 continue
             owner = ctx.guild.get_member(row.owner_id)
             status = "🟢 mở" if row.status == "open" else "🔴 đóng"
-            lines.append(f"{channel.mention} — {status} — {owner.mention if owner else row.owner_id}")
+            lines.append(
+                f"{channel.mention} — {status} — {owner.mention if owner else row.owner_id}"
+            )
         if not lines:
             return await ctx.reply("Hiện không có ticket nào.")
         await ctx.reply("\n".join(lines))
@@ -114,7 +141,9 @@ class Tickets(commands.Cog):
             return await ctx.reply("❌ Lệnh này chỉ dùng trong kênh ticket.")
 
         if ctx.author.id != row.owner_id and not is_staff(ctx.author):
-            return await ctx.reply("❌ Chỉ chủ ticket hoặc Staff/Admin mới được dùng lệnh này.")
+            return await ctx.reply(
+                "❌ Chỉ chủ ticket hoặc Staff/Admin mới được dùng lệnh này."
+            )
 
         members = sorted(
             (m for m in ctx.guild.members if not m.bot),
@@ -123,10 +152,14 @@ class Tickets(commands.Cog):
         candidates = [
             m
             for m in members
-            if m.id != row.owner_id and not is_staff(m) and ctx.channel.overwrites.get(m) is None
+            if m.id != row.owner_id
+            and not is_staff(m)
+            and ctx.channel.overwrites.get(m) is None
         ]
         prompt = "👇 Chọn thành viên muốn **thêm** vào ticket, hoặc bấm **✍️ Nhập ID/Username**:"
-        await ctx.reply(prompt, view=TicketMemberPickView(ctx.channel.id, "add", candidates))
+        await ctx.reply(
+            prompt, view=TicketMemberPickView(ctx.channel.id, "add", candidates)
+        )
 
     @commands.command(name="ticketremove")
     @commands.guild_only()
@@ -137,7 +170,9 @@ class Tickets(commands.Cog):
             return await ctx.reply("❌ Lệnh này chỉ dùng trong kênh ticket.")
 
         if ctx.author.id != row.owner_id and not is_staff(ctx.author):
-            return await ctx.reply("❌ Chỉ chủ ticket hoặc Staff/Admin mới được dùng lệnh này.")
+            return await ctx.reply(
+                "❌ Chỉ chủ ticket hoặc Staff/Admin mới được dùng lệnh này."
+            )
 
         members = sorted(
             (m for m in ctx.guild.members if not m.bot),
@@ -146,7 +181,11 @@ class Tickets(commands.Cog):
         candidates = [
             m
             for m in members
-            if m.id != row.owner_id and not is_staff(m) and ctx.channel.overwrites.get(m) is not None
+            if m.id != row.owner_id
+            and not is_staff(m)
+            and ctx.channel.overwrites.get(m) is not None
         ]
         prompt = "👇 Chọn thành viên muốn **xóa** khỏi ticket, hoặc bấm **✍️ Nhập ID/Username**:"
-        await ctx.reply(prompt, view=TicketMemberPickView(ctx.channel.id, "remove", candidates))
+        await ctx.reply(
+            prompt, view=TicketMemberPickView(ctx.channel.id, "remove", candidates)
+        )

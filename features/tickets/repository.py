@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from sqlalchemy import select
+
 from core.database import async_session
 from features.tickets.models import Ticket, TicketPanelSetup
 
@@ -15,11 +17,13 @@ async def get_by_channel(channel_id: int) -> Ticket | None:
 async def list_open_by_owner(guild_id: int, owner_id: int) -> list[Ticket]:
     async with async_session() as session:
         result = await session.execute(
-            select(Ticket).where(
+            select(Ticket)
+            .where(
                 Ticket.guild_id == guild_id,
                 Ticket.owner_id == owner_id,
                 Ticket.status == "open",
-            ).order_by(Ticket.created_at)
+            )
+            .order_by(Ticket.created_at)
         )
         return list(result.scalars().all())
 
@@ -45,13 +49,15 @@ async def add(
     panel_message_id: int | None = None,
 ) -> None:
     async with async_session() as session:
-        session.add(Ticket(
-            channel_id=channel_id,
-            guild_id=guild_id,
-            owner_id=owner_id,
-            panel_message_id=panel_message_id,
-            last_activity_at=datetime.now().astimezone().replace(tzinfo=None),
-        ))
+        session.add(
+            Ticket(
+                channel_id=channel_id,
+                guild_id=guild_id,
+                owner_id=owner_id,
+                panel_message_id=panel_message_id,
+                last_activity_at=datetime.now().astimezone().replace(tzinfo=None),
+            )
+        )
         await session.commit()
 
 
@@ -104,15 +110,27 @@ async def set_warned(channel_id: int) -> None:
         await session.commit()
 
 
-async def add_panel(channel_id: int, guild_id: int, message_id: int, category_id: int | None) -> None:
+async def add_panel(
+    channel_id: int, guild_id: int, message_id: int, category_id: int | None
+) -> None:
     async with async_session() as session:
-        session.add(TicketPanelSetup(
-            channel_id=channel_id,
-            guild_id=guild_id,
-            message_id=message_id,
-            category_id=category_id,
-        ))
+        session.add(
+            TicketPanelSetup(
+                channel_id=channel_id,
+                guild_id=guild_id,
+                message_id=message_id,
+                category_id=category_id,
+            )
+        )
         await session.commit()
+
+
+async def get_panel(channel_id: int) -> TicketPanelSetup | None:
+    async with async_session() as session:
+        result = await session.execute(
+            select(TicketPanelSetup).where(TicketPanelSetup.channel_id == channel_id)
+        )
+        return result.scalar_one_or_none()
 
 
 async def get_panels() -> list[TicketPanelSetup]:
