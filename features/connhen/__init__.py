@@ -27,6 +27,26 @@ class Connhen(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
+    @commands.command(aliases=["give", "grant", "add"])
+    @commands.is_owner()
+    async def addconnhen(
+        self, ctx: commands.Context, member: discord.Member, amount: int
+    ):
+        """(Owner) Cộng thêm connhen cho người khác. Ví dụ: !addconnhen @user 100"""
+        if amount <= 0:
+            return await ctx.reply("Số tiền phải lớn hơn 0.")
+
+        new_balance = await service.add_connhen(member.id, amount)
+        embed = discord.Embed(
+            title="Đã cộng connhen!",
+            description=(
+                f"Đã cộng **{service.format_amount(amount)}** cho {member.mention}.\n"
+                f"Số dư hiện tại: **{service.format_amount(new_balance)}**"
+            ),
+            color=discord.Color.green(),
+        )
+        await ctx.reply(embed=embed)
+
     @commands.command()
     async def daily(self, ctx: commands.Context):
         """Nhận connhen miễn phí mỗi 24 giờ."""
