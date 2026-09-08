@@ -1,10 +1,10 @@
 from sqlalchemy import select
 
 from core.database import async_session
-from features.tempvoice.models import TempVoiceChannel
+from features.tempvoice.models import CreateVoiceChannel, TempVoiceChannel
 
 
-async def get_by_channel(channel_id: int) -> TempVoiceChannel | None:
+async def get_tempvoice(channel_id: int) -> TempVoiceChannel | None:
     async with async_session() as session:
         result = await session.execute(
             select(TempVoiceChannel).where(TempVoiceChannel.channel_id == channel_id)
@@ -12,7 +12,7 @@ async def get_by_channel(channel_id: int) -> TempVoiceChannel | None:
         return result.scalar_one_or_none()
 
 
-async def get_all() -> list[TempVoiceChannel]:
+async def get_all_tempvoice() -> list[TempVoiceChannel]:
     async with async_session() as session:
         result = await session.execute(
             select(TempVoiceChannel).order_by(TempVoiceChannel.created_at)
@@ -20,7 +20,8 @@ async def get_all() -> list[TempVoiceChannel]:
         return list(result.scalars().all())
 
 
-async def add(
+
+async def create_tempvoice(
     channel_id: int, guild_id: int, owner_id: int, panel_message_id: int | None = None
 ) -> None:
     async with async_session() as session:
@@ -35,7 +36,7 @@ async def add(
         await session.commit()
 
 
-async def remove(channel_id: int) -> TempVoiceChannel | None:
+async def delete_tempvoice(channel_id: int) -> TempVoiceChannel | None:
     async with async_session() as session:
         result = await session.execute(
             select(TempVoiceChannel).where(TempVoiceChannel.channel_id == channel_id)
@@ -47,7 +48,7 @@ async def remove(channel_id: int) -> TempVoiceChannel | None:
         return row
 
 
-async def set_owner(channel_id: int, owner_id: int) -> None:
+async def update_tempvoice_owner(channel_id: int, owner_id: int) -> None:
     async with async_session() as session:
         result = await session.execute(
             select(TempVoiceChannel).where(TempVoiceChannel.channel_id == channel_id)
@@ -57,3 +58,35 @@ async def set_owner(channel_id: int, owner_id: int) -> None:
             return
         row.owner_id = owner_id
         await session.commit()
+
+
+async def get_createvoice(channel_id: int) -> CreateVoiceChannel | None:
+    async with async_session() as session:
+        result = await session.execute(
+            select(CreateVoiceChannel).where(CreateVoiceChannel.channel_id == channel_id)
+        )
+        return result.scalar_one_or_none()
+
+
+async def create_createvoice(channel_id: int, guild_id: int) -> None:
+    async with async_session() as session:
+        session.add(
+            CreateVoiceChannel(
+                channel_id=channel_id,
+                guild_id=guild_id,
+            )
+        )
+        await session.commit()
+
+
+async def delete_createvoice(channel_id: int) -> None:
+    async with async_session() as session:
+        result = await session.execute(
+            select(CreateVoiceChannel).where(CreateVoiceChannel.channel_id == channel_id)
+        )
+        row = result.scalar_one_or_none()
+        if row:
+            await session.delete(row)
+            await session.commit()
+        return row
+

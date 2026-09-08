@@ -62,6 +62,10 @@ async def add_connhen(user_id: int, amount: int) -> int:
     return await repository.add_connhen(user_id, amount)
 
 
+async def leaderboard(limit: int = 10) -> list[tuple[int, int]]:
+    return await repository.top(limit)
+
+
 async def pay(sender_id: int, recipient_id: int, amount: int) -> PayError:
     if amount <= 0:
         return PayError.INVALID

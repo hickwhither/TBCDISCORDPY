@@ -3,11 +3,7 @@ import os
 import discord
 
 from features.tempvoice import repository
-from features.tempvoice.views import (
-    OWNER_PERMS,
-    ControlPanelView,
-    build_embed,
-)
+from features.tempvoice.views import OWNER_PERMS, ControlPanelView, build_embed
 
 TRIGGER_NAME = os.environ.get("TEMP_VOICE_TRIGGER", "Create Voice")
 ROOM_TEMPLATE = os.environ.get("TEMP_VOICE_ROOM_TEMPLATE", "{name}'s Room")
@@ -17,9 +13,7 @@ def is_trigger_channel(channel) -> bool:
     return isinstance(channel, discord.VoiceChannel) and channel.name == TRIGGER_NAME
 
 
-async def create_room(
-    bot, member: discord.Member, trigger: discord.VoiceChannel
-) -> None:
+async def create_room(bot, member: discord.Member, trigger: discord.VoiceChannel) -> None:
     guild = member.guild
     base = ROOM_TEMPLATE.format(name=member.display_name or "User")[:95]
     name = await _unique_room_name(guild, base)
@@ -30,9 +24,7 @@ async def create_room(
         reason=f"TempVoice: tạo phòng cho {member}",
     )
     try:
-        await channel.set_permissions(
-            member, overwrite=OWNER_PERMS, reason="TempVoice: cấp quyền chủ phòng"
-        )
+        await channel.set_permissions(member, overwrite=OWNER_PERMS, reason="TempVoice: cấp quyền chủ phòng")
         await member.move_to(channel, reason="TempVoice: đưa vào phòng mới")
     except discord.Forbidden:
         await channel.delete()
@@ -46,11 +38,11 @@ async def create_room(
         panel_message_id = panel.id
     except (discord.Forbidden, discord.HTTPException) as exc:
         print(f"[tempvoice] không gửi được control panel: {exc!r}")
-    await repository.add(channel.id, guild.id, member.id, panel_message_id)
+    await repository.create_tempvoice(channel.id, guild.id, member.id, panel_message_id)
 
 
 async def delete_room(channel: discord.VoiceChannel) -> None:
-    await repository.remove(channel.id)
+    await repository.delete_tempvoice(channel.id)
     try:
         await channel.delete()
     except discord.NotFound, discord.HTTPException:

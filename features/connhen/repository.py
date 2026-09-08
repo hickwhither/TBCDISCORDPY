@@ -47,6 +47,16 @@ async def sub_connhen(user_id: int, amount: int) -> bool:
         return True
 
 
+async def top(limit: int = 10) -> list[tuple[int, int]]:
+    async with async_session() as session:
+        result = await session.execute(
+            select(UserEconomy.user_id, UserEconomy.connhen)
+            .order_by(UserEconomy.connhen.desc())
+            .limit(limit)
+        )
+        return list(result.all())
+
+
 async def set_last_daily(user_id: int, when: datetime) -> None:
     async with async_session() as session:
         result = await session.execute(

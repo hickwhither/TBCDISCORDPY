@@ -7,7 +7,7 @@ from features.tickets.views import (
     AUTO_CLOSE_HOURS,
     WARN_BEFORE_MINUTES,
     TicketCreateView,
-    _utc_naive,
+    utc_naive,
 )
 
 DELETE_AFTER_MINUTES = AUTO_CLOSE_HOURS * 60
@@ -61,7 +61,7 @@ async def auto_check(bot: discord.ext.commands.Bot) -> None:
             await repository.remove(row.channel_id)
             continue
 
-        last = _utc_naive(row.last_activity_at)
+        last = utc_naive(row.last_activity_at)
         idle_minutes = (now - last).total_seconds() / 60
 
         if idle_minutes >= DELETE_AFTER_MINUTES:

@@ -34,7 +34,6 @@ if config.config_file_name is not None:
 # Add your model's MetaData object here
 # for 'autogenerate' support.
 import features.antiraid.models  # noqa: E402, F401
-import features.connhen.models  # noqa: E402, F401
 import features.tempvoice.models  # noqa: E402, F401
 import features.tickets.models  # noqa: E402, F401
 from core.database import Base  # noqa: E402

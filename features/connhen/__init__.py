@@ -47,6 +47,32 @@ class Connhen(commands.Cog):
         )
         await ctx.reply(embed=embed)
 
+    @commands.command(aliases=["top"])
+    async def bangxephang(
+        self, ctx: commands.Context, limit: int = 10
+    ):
+        """Bảng xếp hạng những người giàu connhen nhất."""
+        limit = max(1, min(limit, 20))
+        rows = await service.leaderboard(limit)
+
+        if not rows:
+            return await ctx.reply("Chưa có ai sở hữu connhen.")
+
+        medals = ["🥇", "🥈", "🥉"]
+        lines = []
+        for position, (user_id, amount) in enumerate(rows, start=1):
+            medal = medals[position - 1] if position <= 3 else f"**{position}.**"
+            user = self.bot.get_user(user_id)
+            name = user.display_name if user else f"<@{user_id}>"
+            lines.append(f"{medal} **{name}**: {service.format_amount(amount)}")
+
+        embed = discord.Embed(
+            title="🏆 Bảng xếp hạng connhen",
+            description="\n".join(lines),
+            color=discord.Color.gold(),
+        )
+        await ctx.reply(embed=embed)
+
     @commands.command()
     async def daily(self, ctx: commands.Context):
         """Nhận connhen miễn phí mỗi 24 giờ."""
