@@ -17,36 +17,48 @@ CHECK_INTERVAL_MINUTES = float(os.environ.get("TICKET_CHECK_INTERVAL_MINUTES", "
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Tickets(bot))
 
-    for row in await repository.get_panels():
-        channel = bot.get_channel(row.channel_id)
-        if not channel:
-            continue
-        try:
-            await channel.fetch_message(row.message_id)
-        except discord.NotFound, discord.Forbidden, discord.HTTPException:
-            continue
-        bot.add_view(TicketCreateView(bot, row.category_id), message_id=row.message_id)
-
-    for row in await repository.get_all():
-        channel = bot.get_channel(row.channel_id)
-        if not channel or not row.panel_message_id:
-            continue
-        try:
-            await channel.fetch_message(row.panel_message_id)
-        except discord.NotFound, discord.Forbidden, discord.HTTPException:
-            continue
-        bot.add_view(
-            TicketPanelView(bot, row.channel_id, status=row.status),
-            message_id=row.panel_message_id,
-        )
-
 
 class Tickets(commands.Cog):
     """Hệ thống ticket riêng tư."""
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        self._views_registered = False
         self.auto_check_task.start()
+
+    async def register_persistent_views(self) -> None:
+        if self._views_registered:
+            return
+        self._views_registered = True
+
+        for row in await repository.get_panels():
+            channel = self.bot.get_channel(row.channel_id)
+            if not channel:
+                continue
+            try:
+                await channel.fetch_message(row.message_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                continue
+            self.bot.add_view(
+                TicketCreateView(self.bot, row.category_id), message_id=row.message_id
+            )
+
+        for row in await repository.get_all():
+            channel = self.bot.get_channel(row.channel_id)
+            if not channel or not row.panel_message_id:
+                continue
+            try:
+                await channel.fetch_message(row.panel_message_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                continue
+            self.bot.add_view(
+                TicketPanelView(self.bot, row.channel_id, status=row.status),
+                message_id=row.panel_message_id,
+            )
+
+    @commands.Cog.listener()
+    async def on_ready(self) -> None:
+        await self.register_persistent_views()
 
     def cog_unload(self) -> None:
         self.auto_check_task.cancel()
@@ -108,7 +120,7 @@ class Tickets(commands.Cog):
         try:
             message = await ctx.channel.fetch_message(row.message_id)
             await message.delete()
-        except discord.NotFound, discord.HTTPException:
+        except (discord.NotFound, discord.HTTPException):
             pass
         await repository.remove_panel(ctx.channel.id)
         await ctx.reply("✅ Đã xóa panel tạo ticket khỏi kênh này.", delete_after=5)

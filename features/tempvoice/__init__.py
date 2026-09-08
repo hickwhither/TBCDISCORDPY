@@ -7,17 +7,6 @@ from features.tempvoice.views import ControlPanelView, refresh_panel
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(TempVoice(bot))
-    for row in await repository.get_all_tempvoice():
-        channel = bot.get_channel(row.channel_id)
-        if not channel or not row.panel_message_id:
-            continue
-        try:
-            await channel.fetch_message(row.panel_message_id)
-        except discord.NotFound, discord.Forbidden, discord.HTTPException:
-            continue
-        bot.add_view(
-            ControlPanelView(bot, row.channel_id), message_id=row.panel_message_id
-        )
 
 
 class TempVoice(commands.Cog):
@@ -25,6 +14,28 @@ class TempVoice(commands.Cog):
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        self._views_registered = False
+
+    async def register_persistent_views(self) -> None:
+        if self._views_registered:
+            return
+        self._views_registered = True
+        for row in await repository.get_all_tempvoice():
+            channel = self.bot.get_channel(row.channel_id)
+            if not channel or not row.panel_message_id:
+                continue
+            try:
+                await channel.fetch_message(row.panel_message_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                continue
+            self.bot.add_view(
+                ControlPanelView(self.bot, row.channel_id),
+                message_id=row.panel_message_id,
+            )
+
+    @commands.Cog.listener()
+    async def on_ready(self) -> None:
+        await self.register_persistent_views()
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after) -> None:
