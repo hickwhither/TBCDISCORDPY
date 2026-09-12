@@ -48,6 +48,18 @@ async def delete_tempvoice(channel_id: int) -> TempVoiceChannel | None:
         return row
 
 
+async def set_tempvoice_panel(channel_id: int, panel_message_id: int | None) -> None:
+    async with async_session() as session:
+        result = await session.execute(
+            select(TempVoiceChannel).where(TempVoiceChannel.channel_id == channel_id)
+        )
+        row = result.scalar_one_or_none()
+        if not row:
+            return
+        row.panel_message_id = panel_message_id
+        await session.commit()
+
+
 async def update_tempvoice_owner(channel_id: int, owner_id: int) -> None:
     async with async_session() as session:
         result = await session.execute(
