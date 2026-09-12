@@ -13,7 +13,9 @@ class ServerLog(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
+    async def on_member_update(
+        self, before: discord.Member, after: discord.Member
+    ) -> None:
         if before.guild is None:
             return
         await service.log_nickname_change(self.bot, before, after)
@@ -27,7 +29,9 @@ class ServerLog(commands.Cog):
         await service.log_message_delete(self.bot, message)
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:
+    async def on_message_edit(
+        self, before: discord.Message, after: discord.Message
+    ) -> None:
         await service.log_message_edit(self.bot, before, after)
 
     @commands.Cog.listener()
@@ -63,7 +67,9 @@ class ServerLog(commands.Cog):
         await service.log_channel_delete(self.bot, channel)
 
     @commands.Cog.listener()
-    async def on_guild_channel_update(self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel) -> None:
+    async def on_guild_channel_update(
+        self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel
+    ) -> None:
         await service.log_channel_update(self.bot, before, after)
 
     @commands.Cog.listener()
@@ -75,9 +81,13 @@ class ServerLog(commands.Cog):
         await service.log_role_delete(self.bot, role)
 
     @commands.Cog.listener()
-    async def on_guild_role_update(self, before: discord.Role, after: discord.Role) -> None:
+    async def on_guild_role_update(
+        self, before: discord.Role, after: discord.Role
+    ) -> None:
         await service.log_role_update(self.bot, before, after)
 
     @commands.Cog.listener()
-    async def on_guild_update(self, before: discord.Guild, after: discord.Guild) -> None:
+    async def on_guild_update(
+        self, before: discord.Guild, after: discord.Guild
+    ) -> None:
         await service.log_guild_update(self.bot, before, after)

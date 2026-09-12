@@ -102,7 +102,7 @@ class MemberInputModal(ui.Modal, title="Nhập thành viên"):
                 )
             try:
                 await member.move_to(None)
-            except (discord.Forbidden, discord.HTTPException):
+            except discord.Forbidden, discord.HTTPException:
                 return await reply_ephemeral(
                     interaction,
                     "❌ Không thể đuổi người này (kiểm tra quyền Move Members của bot).",
@@ -387,7 +387,7 @@ class ConfirmDeleteView(ui.View):
                 await channel.delete()
             except discord.Forbidden:
                 text = "❌ Không đủ quyền xóa kênh (bot cần quyền Manage Channels)."
-            except (discord.NotFound, discord.HTTPException):
+            except discord.NotFound, discord.HTTPException:
                 text = None
             else:
                 await repository.delete_tempvoice(self.channel_id)
@@ -396,7 +396,7 @@ class ConfirmDeleteView(ui.View):
             await reply_ephemeral(interaction, text)
         try:
             await interaction.delete_original_response()
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             pass
         self.stop()
 

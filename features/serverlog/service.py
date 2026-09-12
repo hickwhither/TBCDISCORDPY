@@ -17,7 +17,9 @@ def _channel(bot: discord.Client) -> discord.TextChannel | None:
     return channel if isinstance(channel, discord.TextChannel) else None
 
 
-def _footer(embed: discord.Embed, reason: str | None = None, by: str | None = None) -> None:
+def _footer(
+    embed: discord.Embed, reason: str | None = None, by: str | None = None
+) -> None:
     parts = []
     if by:
         parts.append(f"Bởi: {by}")
@@ -31,18 +33,24 @@ def _user_name(author: discord.abc.User | discord.Member) -> str:
     return str(author)
 
 
-async def send(bot: discord.Client, embed: discord.Embed, reason: str | None = None, by: str | None = None) -> None:
+async def send(
+    bot: discord.Client,
+    embed: discord.Embed,
+    reason: str | None = None,
+    by: str | None = None,
+) -> None:
     channel = _channel(bot)
     if not channel:
         return
     _footer(embed, reason=reason, by=by)
     try:
         await channel.send(embed=embed)
-    except (discord.Forbidden, discord.HTTPException):
+    except discord.Forbidden, discord.HTTPException:
         pass
 
 
 # ---------------------------------------------------------------- member update
+
 
 async def log_nickname_change(bot, before, after) -> None:
     old = before.nick or "(không có)"
@@ -67,7 +75,9 @@ async def log_username_change(bot, before, after) -> None:
 
 
 async def log_avatar_change(bot, before, after) -> None:
-    if (before.display_avatar.url if before.display_avatar else None) == (after.display_avatar.url if after.display_avatar else None):
+    if (before.display_avatar.url if before.display_avatar else None) == (
+        after.display_avatar.url if after.display_avatar else None
+    ):
         return
     embed = discord.Embed(title="🖼️ Avatar Changed", color=COLOR_UPDATE)
     embed.description = f"{after.mention} ({after})"
@@ -83,9 +93,13 @@ async def log_role_change(bot, before, after) -> None:
     embed = discord.Embed(title="🛡️ Roles Updated", color=COLOR_UPDATE)
     embed.description = f"{after.mention} ({after})"
     if added:
-        embed.add_field(name="Thêm role", value=", ".join(r.mention for r in added), inline=False)
+        embed.add_field(
+            name="Thêm role", value=", ".join(r.mention for r in added), inline=False
+        )
     if removed:
-        embed.add_field(name="Gỡ role", value=", ".join(r.mention for r in removed), inline=False)
+        embed.add_field(
+            name="Gỡ role", value=", ".join(r.mention for r in removed), inline=False
+        )
     await send(bot, embed)
 
 
@@ -101,6 +115,7 @@ async def log_boost_change(bot, before, after) -> None:
 
 # ---------------------------------------------------------------- message events
 
+
 async def log_message_delete(bot, message: discord.Message) -> None:
     if not message.guild or message.author.bot:
         return
@@ -110,25 +125,37 @@ async def log_message_delete(bot, message: discord.Message) -> None:
     content = message.content or "(nội dung trống)"
     embed.add_field(name="Tin nhắn bị xóa", value=content[:1000] or "…", inline=False)
     if message.attachments:
-        embed.add_field(name="Attachment", value="\n".join(a.filename for a in message.attachments), inline=False)
+        embed.add_field(
+            name="Attachment",
+            value="\n".join(a.filename for a in message.attachments),
+            inline=False,
+        )
     await send(bot, embed)
     for attachment in message.attachments:
         try:
-            await _channel(bot).send(f"🗑️ Attachment bị xóa bởi {message.author.mention} ({message.channel.mention}): {attachment.url}")
-        except (discord.Forbidden, discord.HTTPException):
+            await _channel(bot).send(
+                f"🗑️ Attachment bị xóa bởi {message.author.mention} ({message.channel.mention}): {attachment.url}"
+            )
+        except discord.Forbidden, discord.HTTPException:
             pass
 
 
-async def log_message_edit(bot, before: discord.Message, after: discord.Message) -> None:
+async def log_message_edit(
+    bot, before: discord.Message, after: discord.Message
+) -> None:
     if not before.guild or before.author.bot:
         return
     if before.content == after.content:
         return
     embed = discord.Embed(title="📝 Message Edited", color=COLOR_UPDATE)
     embed.description = f"{before.author.mention} ({_user_name(before.author)}) in {before.channel.mention}"
-    embed.add_field(name="Trước", value=(before.content or "(trống)")[:1000], inline=False)
+    embed.add_field(
+        name="Trước", value=(before.content or "(trống)")[:1000], inline=False
+    )
     embed.add_field(name="Sau", value=(after.content or "(trống)")[:1000], inline=False)
-    embed.add_field(name="Jump", value=f"[Nhảy tới tin]({after.jump_url})", inline=False)
+    embed.add_field(
+        name="Jump", value=f"[Nhảy tới tin]({after.jump_url})", inline=False
+    )
     await send(bot, embed)
 
 
@@ -149,11 +176,16 @@ async def log_bulk_delete(bot, messages) -> None:
 
 # ---------------------------------------------------------------- member lifecycle
 
+
 async def log_member_join(bot, member: discord.Member) -> None:
     embed = discord.Embed(title="📥 Member Joined", color=COLOR_JOIN)
     embed.description = f"{member.mention} ({_user_name(member)})"
     embed.add_field(name="ID", value=member.id, inline=True)
-    embed.add_field(name="Tài khoản tạo", value=discord.utils.format_dt(member.created_at, style="R"), inline=True)
+    embed.add_field(
+        name="Tài khoản tạo",
+        value=discord.utils.format_dt(member.created_at, style="R"),
+        inline=True,
+    )
     await send(bot, embed)
 
 
@@ -166,6 +198,7 @@ async def log_member_remove(bot, member: discord.Member) -> None:
 
 
 # ---------------------------------------------------------------- ban / kick / timeout
+
 
 async def log_member_ban(bot, guild: discord.Guild, user: discord.User) -> None:
     embed = discord.Embed(title="🔨 Member Banned", color=COLOR_DELETE)
@@ -182,6 +215,7 @@ async def log_member_unban(bot, guild: discord.Guild, user: discord.User) -> Non
 
 
 # ---------------------------------------------------------------- audit entries (kick/timeout)
+
 
 async def log_audit_entry(bot, entry: discord.AuditLogEntry) -> None:
     action = entry.action
@@ -204,13 +238,16 @@ async def log_audit_entry(bot, entry: discord.AuditLogEntry) -> None:
         embed.description = f"{target.mention} ({_user_name(target)})"
         await send(bot, embed, reason=reason, by=by)
 
-    elif action == discord.AuditLogAction.member_update and isinstance(target, discord.User):
+    elif action == discord.AuditLogAction.member_update and isinstance(
+        target, discord.User
+    ):
         embed = discord.Embed(title="⏱️ Member Timed Out", color=COLOR_UPDATE)
         embed.description = f"{target.mention} ({_user_name(target)})"
         await send(bot, embed, reason=reason, by=by)
 
 
 # ---------------------------------------------------------------- channel / role
+
 
 async def log_channel_create(bot, channel: discord.abc.GuildChannel) -> None:
     embed = discord.Embed(title="🆕 Channel Created", color=COLOR_CREATE)
@@ -227,7 +264,9 @@ async def log_channel_delete(bot, channel: discord.abc.GuildChannel) -> None:
     await send(bot, embed)
 
 
-async def log_channel_update(bot, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel) -> None:
+async def log_channel_update(
+    bot, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel
+) -> None:
     if before.name != after.name:
         embed = discord.Embed(title="🛠️ Channel Renamed", color=COLOR_UPDATE)
         embed.description = f"{after.mention}"
@@ -259,6 +298,7 @@ async def log_role_update(bot, before: discord.Role, after: discord.Role) -> Non
 
 
 # ---------------------------------------------------------------- guild
+
 
 async def log_guild_update(bot, before: discord.Guild, after: discord.Guild) -> None:
     changed = []

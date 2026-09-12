@@ -61,7 +61,7 @@ class StatusModal(ui.Modal, title="Đổi trạng thái kênh"):
         await interaction.response.defer(ephemeral=True)
         try:
             await channel.edit(status=value)
-        except (discord.Forbidden, discord.HTTPException):
+        except discord.Forbidden, discord.HTTPException:
             text = (
                 "❌ Không đặt được trạng thái kênh (server cần ít nhất 1 Level Boost "
                 "và bot cần quyền Manage Channels)."
