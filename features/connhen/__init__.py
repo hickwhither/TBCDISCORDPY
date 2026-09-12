@@ -48,9 +48,7 @@ class Connhen(commands.Cog):
         await ctx.reply(embed=embed)
 
     @commands.command(aliases=["top"])
-    async def bangxephang(
-        self, ctx: commands.Context, limit: int = 10
-    ):
+    async def bangxephang(self, ctx: commands.Context, limit: int = 10):
         """Bảng xếp hạng những người giàu connhen nhất."""
         limit = max(1, min(limit, 20))
         rows = await service.leaderboard(limit)

@@ -37,7 +37,7 @@ class Tickets(commands.Cog):
                 continue
             try:
                 await channel.fetch_message(row.message_id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            except discord.NotFound, discord.Forbidden, discord.HTTPException:
                 continue
             self.bot.add_view(
                 TicketCreateView(self.bot, row.category_id), message_id=row.message_id
@@ -49,7 +49,7 @@ class Tickets(commands.Cog):
                 continue
             try:
                 await channel.fetch_message(row.panel_message_id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            except discord.NotFound, discord.Forbidden, discord.HTTPException:
                 continue
             self.bot.add_view(
                 TicketPanelView(self.bot, row.channel_id, status=row.status),
@@ -120,7 +120,7 @@ class Tickets(commands.Cog):
         try:
             message = await ctx.channel.fetch_message(row.message_id)
             await message.delete()
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             pass
         await repository.remove_panel(ctx.channel.id)
         await ctx.reply("✅ Đã xóa panel tạo ticket khỏi kênh này.", delete_after=5)
