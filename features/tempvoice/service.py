@@ -13,7 +13,9 @@ def is_trigger_channel(channel) -> bool:
     return isinstance(channel, discord.VoiceChannel) and channel.name == TRIGGER_NAME
 
 
-async def create_room(bot, member: discord.Member, trigger: discord.VoiceChannel) -> None:
+async def create_room(
+    bot, member: discord.Member, trigger: discord.VoiceChannel
+) -> None:
     guild = member.guild
     base = ROOM_TEMPLATE.format(name=member.display_name or "User")[:95]
     name = await _unique_room_name(guild, base)
@@ -25,7 +27,9 @@ async def create_room(bot, member: discord.Member, trigger: discord.VoiceChannel
     )
     await repository.create_tempvoice(channel.id, guild.id, member.id, None)
     try:
-        await channel.set_permissions(member, overwrite=OWNER_PERMS, reason="TempVoice: cấp quyền chủ phòng")
+        await channel.set_permissions(
+            member, overwrite=OWNER_PERMS, reason="TempVoice: cấp quyền chủ phòng"
+        )
         await member.move_to(channel, reason="TempVoice: đưa vào phòng mới")
     except discord.Forbidden:
         await channel.delete()
@@ -34,7 +38,7 @@ async def create_room(bot, member: discord.Member, trigger: discord.VoiceChannel
     embed = build_embed(guild, channel, member)
     view = ControlPanelView(bot, channel.id)
     try:
-panel = await channel.send(embed=embed, view=view)
+        panel = await channel.send(embed=embed, view=view)
         await repository.set_tempvoice_panel(channel.id, panel.id)
     except (discord.Forbidden, discord.HTTPException) as exc:
         print(f"[tempvoice] không gửi được control panel: {exc!r}")

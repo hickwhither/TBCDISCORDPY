@@ -1,7 +1,7 @@
 """add server_info_panels table
 
 Revision ID: a71f9c3d2e05
-Revises: 3b22e11c3530
+Revises: 6f3f5b942ade
 Create Date: 2026-09-12 18:00:00.000000
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "a71f9c3d2e05"
-down_revision: Union[str, Sequence[str], None] = "3b22e11c3530"
+down_revision: Union[str, Sequence[str], None] = "6f3f5b942ade"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

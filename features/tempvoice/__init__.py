@@ -29,7 +29,7 @@ class TempVoice(commands.Cog):
                 continue
             try:
                 await channel.fetch_message(row.panel_message_id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            except discord.NotFound, discord.Forbidden, discord.HTTPException:
                 continue
             self.bot.add_view(
                 ControlPanelView(self.bot, row.channel_id),
@@ -59,7 +59,9 @@ class TempVoice(commands.Cog):
                 )
                 await after.channel.send(message)
             except discord.HTTPException as exc:
-                await after.channel.send(f"⚠️ Không thể tạo phòng voice (lỗi API): {exc}")
+                await after.channel.send(
+                    f"⚠️ Không thể tạo phòng voice (lỗi API): {exc}"
+                )
             except Exception as exc:
                 print(f"[tempvoice] create_room error: {exc!r}")
 

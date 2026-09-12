@@ -20,7 +20,6 @@ async def get_all_tempvoice() -> list[TempVoiceChannel]:
         return list(result.scalars().all())
 
 
-
 async def create_tempvoice(
     channel_id: int, guild_id: int, owner_id: int, panel_message_id: int | None = None
 ) -> None:
@@ -75,7 +74,9 @@ async def update_tempvoice_owner(channel_id: int, owner_id: int) -> None:
 async def get_createvoice(channel_id: int) -> CreateVoiceChannel | None:
     async with async_session() as session:
         result = await session.execute(
-            select(CreateVoiceChannel).where(CreateVoiceChannel.channel_id == channel_id)
+            select(CreateVoiceChannel).where(
+                CreateVoiceChannel.channel_id == channel_id
+            )
         )
         return result.scalar_one_or_none()
 
@@ -94,11 +95,12 @@ async def create_createvoice(channel_id: int, guild_id: int) -> None:
 async def delete_createvoice(channel_id: int) -> None:
     async with async_session() as session:
         result = await session.execute(
-            select(CreateVoiceChannel).where(CreateVoiceChannel.channel_id == channel_id)
+            select(CreateVoiceChannel).where(
+                CreateVoiceChannel.channel_id == channel_id
+            )
         )
         row = result.scalar_one_or_none()
         if row:
             await session.delete(row)
             await session.commit()
         return row
-

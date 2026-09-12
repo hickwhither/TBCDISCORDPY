@@ -49,5 +49,5 @@ async def edit_panel(
     try:
         message = await channel.fetch_message(row.panel_message_id)
         await message.edit(embed=build_embed(guild, channel, owner), view=view)
-    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+    except discord.NotFound, discord.Forbidden, discord.HTTPException:
         pass
