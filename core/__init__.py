@@ -1,5 +1,6 @@
 import datetime
 import os
+import traceback
 
 import discord
 from discord import Message
@@ -41,6 +42,26 @@ async def setup_hook():
     print()
     for extra in extra_log:
         print(f"From {extra[0]}:\n{extra[1]}")
+
+
+@TBC.event
+async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
+    if isinstance(error, commands.CommandNotFound):
+        return
+    if isinstance(error, commands.NotOwner):
+        return await ctx.reply("❌ Lệnh này chỉ dành cho owner.")
+    if isinstance(error, commands.CheckFailure):
+        return await ctx.reply("❌ Bạn không có quyền dùng lệnh này.")
+    if isinstance(error, commands.UserInputError):
+        return await ctx.reply(f"❌ Sai cú pháp: {error}")
+    print(
+        f"❌ Lỗi {ctx.command}:\n"
+        + "".join(traceback.format_exception(type(error), error, error.__traceback__))
+    )
+    try:
+        await ctx.reply(f"❌ Có lỗi xảy ra: **{error}**")
+    except discord.HTTPException:
+        pass
 
 
 @TBC.event
