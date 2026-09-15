@@ -47,7 +47,7 @@ async def create_room(
 async def delete_room(channel: discord.VoiceChannel) -> None:
     try:
         await channel.delete()
-    except discord.NotFound, discord.HTTPException:
+    except (discord.NotFound, discord.HTTPException):
         pass
     except discord.Forbidden as exc:
         print(f"[tempvoice] không xóa được phòng {channel.id}: {exc!r}")

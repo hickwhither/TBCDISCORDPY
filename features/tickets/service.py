@@ -49,7 +49,7 @@ async def create_setup_panel(ctx: discord.ext.commands.Context) -> None:
     await repository.add_panel(ctx.channel.id, ctx.guild.id, message.id, category_id)
     try:
         await ctx.message.delete()
-    except discord.NotFound, discord.HTTPException:
+    except (discord.NotFound, discord.HTTPException):
         pass
 
 
@@ -70,7 +70,7 @@ async def auto_check(bot: discord.ext.commands.Bot) -> None:
                     "⏰ Ticket này không có phản hồi trong thời gian dài nên sẽ tự động bị xóa."
                 )
                 await channel.delete(reason="Ticket: tự động xóa do không hoạt động")
-            except discord.Forbidden, discord.NotFound, discord.HTTPException:
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException):
                 pass
             await repository.remove(row.channel_id)
             continue
@@ -82,6 +82,6 @@ async def auto_check(bot: discord.ext.commands.Bot) -> None:
                     f"⚠️ Ticket này không hoạt động. Ticket sẽ tự động bị xóa sau "
                     f"**{remaining} phút** nữa nếu không có phản hồi."
                 )
-            except discord.Forbidden, discord.NotFound, discord.HTTPException:
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException):
                 pass
             await repository.set_warned(row.channel_id)

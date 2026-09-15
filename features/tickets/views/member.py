@@ -43,7 +43,7 @@ async def apply_member_change(
                         reason="Ticket: thêm người vào ticket",
                     )
                     changed.append(m.mention)
-        except discord.Forbidden, discord.HTTPException:
+        except (discord.Forbidden, discord.HTTPException):
             await interaction.followup.send(
                 "❌ Bot không có quyền cập nhật quyền kênh (cần Manage Channels).",
                 ephemeral=True,
@@ -62,7 +62,7 @@ async def apply_member_change(
                         reason="Ticket: xóa người khỏi ticket",
                     )
                     removed.append(m.mention)
-        except discord.Forbidden, discord.HTTPException:
+        except (discord.Forbidden, discord.HTTPException):
             await interaction.followup.send(
                 "❌ Bot không có quyền cập nhật quyền kênh (cần Manage Channels).",
                 ephemeral=True,
@@ -115,7 +115,7 @@ class TicketMemberSelect(ui.Select):
         if text:
             try:
                 await interaction.message.edit(content=text, view=None)
-            except discord.NotFound, discord.HTTPException:
+            except (discord.NotFound, discord.HTTPException):
                 pass
         self.view.stop()
 
@@ -150,7 +150,7 @@ class TicketMemberModal(ui.Modal, title="Nhập thành viên"):
         if text:
             try:
                 await self.source_message.edit(content=text, view=None)
-            except discord.NotFound, discord.HTTPException:
+            except (discord.NotFound, discord.HTTPException):
                 pass
 
 

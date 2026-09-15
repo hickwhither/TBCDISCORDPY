@@ -98,7 +98,7 @@ class ServerInfo(commands.Cog):
                 try:
                     old_msg = await old_channel.fetch_message(old_row.message_id)
                     await old_msg.delete()
-                except discord.NotFound, discord.HTTPException:
+                except (discord.NotFound, discord.HTTPException):
                     pass
             await repository.remove_panel(guild.id)
 
@@ -110,7 +110,7 @@ class ServerInfo(commands.Cog):
         )
         try:
             await ctx.message.delete()
-        except discord.NotFound, discord.HTTPException:
+        except (discord.NotFound, discord.HTTPException):
             pass
 
     @commands.command(name="serverinfopanelremove", hidden=True)
@@ -127,7 +127,7 @@ class ServerInfo(commands.Cog):
             try:
                 message = await channel.fetch_message(row.message_id)
                 await message.delete()
-            except discord.NotFound, discord.HTTPException:
+            except (discord.NotFound, discord.HTTPException):
                 pass
         await repository.remove_panel(guild.id)
         await ctx.reply("✅ Đã xóa panel thông tin server.", delete_after=5)

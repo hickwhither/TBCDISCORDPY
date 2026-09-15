@@ -99,5 +99,5 @@ async def _update_warning_message(channel: discord.TextChannel, ban_count: int) 
         embed = message.embeds[0]
         embed.set_footer(text=f"Đã ban: {ban_count}")
         await message.edit(embed=embed)
-    except discord.NotFound, discord.HTTPException:
+    except (discord.NotFound, discord.HTTPException):
         pass
