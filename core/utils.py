@@ -9,12 +9,12 @@ async def reply_ephemeral(
 ) -> None:
     try:
         msg = await interaction.followup.send(content, **kwargs)
-    except discord.NotFound, discord.HTTPException:
+    except (discord.NotFound, discord.HTTPException):
         return
     await asyncio.sleep(delay)
     try:
         await msg.delete()
-    except discord.NotFound, discord.HTTPException:
+    except (discord.NotFound, discord.HTTPException):
         pass
 
 
@@ -37,7 +37,7 @@ async def resolve_member(guild: discord.Guild, value: str) -> discord.Member | N
             return member
         try:
             return await guild.fetch_member(user_id)
-        except discord.NotFound, discord.HTTPException:
+        except (discord.NotFound, discord.HTTPException):
             return None
 
     search = value.casefold()

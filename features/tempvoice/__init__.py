@@ -29,7 +29,7 @@ class TempVoice(commands.Cog):
                 continue
             try:
                 await channel.fetch_message(row.panel_message_id)
-            except discord.NotFound, discord.Forbidden, discord.HTTPException:
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                 continue
             self.bot.add_view(
                 ControlPanelView(self.bot, row.channel_id),

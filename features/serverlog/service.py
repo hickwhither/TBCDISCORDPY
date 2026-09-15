@@ -45,7 +45,7 @@ async def send(
     _footer(embed, reason=reason, by=by)
     try:
         await channel.send(embed=embed)
-    except discord.Forbidden, discord.HTTPException:
+    except (discord.Forbidden, discord.HTTPException):
         pass
 
 
@@ -136,7 +136,7 @@ async def log_message_delete(bot, message: discord.Message) -> None:
             await _channel(bot).send(
                 f"🗑️ Attachment bị xóa bởi {message.author.mention} ({message.channel.mention}): {attachment.url}"
             )
-        except discord.Forbidden, discord.HTTPException:
+        except (discord.Forbidden, discord.HTTPException):
             pass
 
 

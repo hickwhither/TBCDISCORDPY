@@ -85,7 +85,7 @@ async def post_panel(
     embed = build_embed(guild)
     try:
         message = await channel.send(embed=embed)
-    except discord.Forbidden, discord.HTTPException:
+    except (discord.Forbidden, discord.HTTPException):
         return None
     await repository.upsert_panel(guild.id, channel.id, message.id)
     return message
@@ -104,9 +104,9 @@ async def refresh_panel(guild: discord.Guild) -> None:
     try:
         message = await channel.fetch_message(row.message_id)
         await message.edit(embed=embed)
-    except discord.NotFound, discord.Forbidden, discord.HTTPException:
+    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
         try:
             message = await channel.send(embed=embed)
             await repository.upsert_panel(guild.id, channel.id, message.id)
-        except discord.Forbidden, discord.HTTPException:
+        except (discord.Forbidden, discord.HTTPException):
             pass

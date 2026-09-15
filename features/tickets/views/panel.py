@@ -26,7 +26,7 @@ async def edit_panel(guild: discord.Guild, channel: discord.TextChannel, row) ->
     try:
         message = await channel.fetch_message(row.panel_message_id)
         await message.edit(embed=embed, view=view)
-    except discord.NotFound, discord.HTTPException:
+    except (discord.NotFound, discord.HTTPException):
         pass
 
 
@@ -196,7 +196,7 @@ class ConfirmDeleteView(ui.View):
                 await channel.delete(reason="Ticket: xóa ticket")
             except discord.Forbidden:
                 text = "❌ Bot không đủ quyền xóa kênh (cần quyền Manage Channels)."
-            except discord.NotFound, discord.HTTPException:
+            except (discord.NotFound, discord.HTTPException):
                 text = None
             else:
                 await repository.remove(self.channel_id)
@@ -205,6 +205,6 @@ class ConfirmDeleteView(ui.View):
             await reply_ephemeral(interaction, text)
         try:
             await interaction.delete_original_response()
-        except discord.NotFound, discord.HTTPException:
+        except (discord.NotFound, discord.HTTPException):
             pass
         self.stop()
