@@ -1,11 +1,6 @@
 # TBC Discord Bot
 
-This is a hobby Discord bot for a personal server. It answers users in Vietnamese. The bot runs on the discord.py library. Its features include a connhen economy, temporary voice rooms, private tickets, anti-raid channels, server info panels, and server logging.
-
-## Documentation
-
-- The setup and run guide: docs/setup.md
-- The architecture overview: docs/architecture.md
+TBC is a Discord bot that answers users in Vietnamese. It runs on Python and discord.py, uses uv for dependencies, SQLite for data, and Docker for deployment.
 
 ## Quick start
 
@@ -15,4 +10,11 @@ This is a hobby Discord bot for a personal server. It answers users in Vietnames
 
 For Docker, run `docker compose build` and `docker compose up -d`.
 
-Note for the current master: at commit 1292f19, most extensions fail to load because several files use Python 2 style except clauses. The architecture document lists the affected files and the fix.
+## Documentation
+
+- The setup and run guide: docs/setup.md
+- The architecture overview: docs/architecture.md
+
+## Note for the current master
+
+At commit 1292f19, most extensions fail to load because several files use Python 2 style except clauses. docs/architecture.md lists the affected files and the fix.
