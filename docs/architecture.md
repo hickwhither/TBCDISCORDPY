@@ -22,6 +22,7 @@ core/                    Shared framework
   utils.py               Shared helpers (reply_ephemeral, resolve_member)
 features/                Per-feature cogs, the project calls them extensions
   antiraid/              Marks a channel and auto-bans anyone who posts there
+  birthday/              Celebrates member birthdays in a channel the admin configures
   connhen/               Fun economy currency named connhen
   dev.py                 Owner utilities (sync, reload)
   help.py                Custom help command
@@ -54,9 +55,9 @@ Each feature is an extension. It exposes a top-level async function named setup 
 
 ## Data
 
-The default database is data/tbc.db. The migration head is a71f9c3d2e05. To change the schema, edit the model, then run `uv run alembic revision --autogenerate -m "describe the change"` and review the generated file. The bot applies new migrations at startup.
+The default database is data/tbc.db. The migration head is 888d5bd70151. To change the schema, edit the model, then run `uv run alembic revision --autogenerate -m "describe the change"` and review the generated file. The bot applies new migrations at startup.
 
-There is a gap in autogenerate. migrations/env.py imports the models for antiraid, tempvoice, and tickets, but not connhen and serverinfo. Add those imports before you autogenerate, or the tool will not see changes to those models.
+There is a gap in autogenerate. migrations/env.py imports the models for antiraid, birthday, tempvoice, and tickets, but not connhen and serverinfo. Add those imports before you autogenerate, or the tool will not see changes to those models.
 
 ## Configuration
 
@@ -77,6 +78,8 @@ core/config.py loads a dotenv file first, then reads the variables from the envi
 | `TICKET_WARN_BEFORE_MINUTES` | no | `30` | the warning before auto-close |
 | `TICKET_CHECK_INTERVAL_MINUTES` | no | `15` | the background sweep interval |
 | `TICKET_MAX_PER_USER` | no | `2` | the open-ticket limit per user |
+| `BIRTHDAY_TIMEZONE` | no | `Asia/Ho_Chi_Minh` | the timezone that decides if it is a member's birthday |
+| `BIRTHDAY_GIFT_CONNHEN` | no | `500` | the connhen gift per birthday year, `0` disables gifts |
 
 ## Deployment
 
