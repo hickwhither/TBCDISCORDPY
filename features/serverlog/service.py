@@ -134,7 +134,9 @@ async def log_message_delete(bot, message: discord.Message) -> None:
     for attachment in message.attachments:
         try:
             await _channel(bot).send(
-                f"🗑️ Attachment bị xóa bởi {message.author.mention} ({message.channel.mention}): {attachment.url}"
+                f"🗑️ Attachment bị xóa bởi {message.author.mention} ({message.channel.mention}): {attachment.url}",
+                mention_author=False, allowed_mentions=discord.AllowedMentions.none()
+
             )
         except (discord.Forbidden, discord.HTTPException):
             pass
